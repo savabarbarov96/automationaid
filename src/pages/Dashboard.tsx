@@ -1,20 +1,38 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2, Edit2, Clock, RotateCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '../components/Navigation';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const Dashboard = () => {
   const [webhooks, setWebhooks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [newWebhookUrl, setNewWebhookUrl] = useState('');
+  const [editingWebhook, setEditingWebhook] = useState<any>(null);
+  const [schedulingWebhook, setSchedulingWebhook] = useState<any>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
-    // Check authentication
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         navigate('/auth');
@@ -46,13 +64,19 @@ const Dashboard = () => {
   };
 
   const addWebhook = async () => {
-    const url = prompt('Enter webhook URL:');
-    if (!url) return;
+    if (!newWebhookUrl) {
+      toast({
+        title: "Error",
+        description: "Please enter a webhook URL",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const { error } = await supabase
         .from('webhook_integrations')
-        .insert([{ url, user_id: session.user.id }]);
+        .insert([{ url: newWebhookUrl, user_id: session.user.id }]);
 
       if (error) throw error;
 
@@ -60,6 +84,78 @@ const Dashboard = () => {
         title: "Success",
         description: "Webhook added successfully",
       });
+      setNewWebhookUrl('');
+      fetchWebhooks();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteWebhook = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('webhook_integrations')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Webhook deleted successfully",
+      });
+      fetchWebhooks();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateWebhookName = async (id: string, newName: string) => {
+    try {
+      const { error } = await supabase
+        .from('webhook_integrations')
+        .update({ name: newName })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Webhook name updated successfully",
+      });
+      setEditingWebhook(null);
+      fetchWebhooks();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateWebhookSchedule = async (id: string, schedule: string) => {
+    try {
+      const { error } = await supabase
+        .from('webhook_integrations')
+        .update({ schedule })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Webhook schedule updated successfully",
+      });
+      setSchedulingWebhook(null);
       fetchWebhooks();
     } catch (error: any) {
       toast({
@@ -77,13 +173,27 @@ const Dashboard = () => {
         <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl p-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold">Dashboard</h1>
-            <button
-              onClick={addWebhook}
-              className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
-            >
-              <Plus size={20} />
-              Add Webhook
-            </button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button className="bg-black hover:bg-gray-800">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Webhook
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Add New Webhook</SheetTitle>
+                </SheetHeader>
+                <div className="grid gap-4 py-4">
+                  <Input
+                    placeholder="Enter webhook URL"
+                    value={newWebhookUrl}
+                    onChange={(e) => setNewWebhookUrl(e.target.value)}
+                  />
+                  <Button onClick={addWebhook}>Add Webhook</Button>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
           {isLoading ? (
@@ -101,13 +211,90 @@ const Dashboard = () => {
                   className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
                 >
                   <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">{webhook.url}</p>
-                      <p className="text-sm text-gray-500">
+                    <div className="space-y-1">
+                      <p className="font-medium">{webhook.name}</p>
+                      <p className="text-sm text-gray-500">{webhook.url}</p>
+                      {webhook.schedule && (
+                        <p className="text-sm text-gray-500">
+                          Schedule: {webhook.schedule}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-400">
                         Added {new Date(webhook.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className={`h-3 w-3 rounded-full ${webhook.is_active ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <div className="flex items-center space-x-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setEditingWebhook(webhook)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Rename Webhook</DialogTitle>
+                          </DialogHeader>
+                          <Input
+                            placeholder="Enter new name"
+                            defaultValue={webhook.name}
+                            onChange={(e) => setEditingWebhook({
+                              ...webhook,
+                              name: e.target.value
+                            })}
+                          />
+                          <Button
+                            onClick={() => updateWebhookName(webhook.id, editingWebhook.name)}
+                          >
+                            Save
+                          </Button>
+                        </DialogContent>
+                      </Dialog>
+
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setSchedulingWebhook(webhook)}
+                          >
+                            <Clock className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Set Schedule</DialogTitle>
+                          </DialogHeader>
+                          <Input
+                            placeholder="Enter cron schedule (e.g., * * * * *)"
+                            defaultValue={webhook.schedule || ''}
+                            onChange={(e) => setSchedulingWebhook({
+                              ...webhook,
+                              schedule: e.target.value
+                            })}
+                          />
+                          <Button
+                            onClick={() => updateWebhookSchedule(webhook.id, schedulingWebhook.schedule)}
+                          >
+                            Save Schedule
+                          </Button>
+                        </DialogContent>
+                      </Dialog>
+
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="text-red-500 hover:text-red-600"
+                        onClick={() => deleteWebhook(webhook.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+
+                      <div className={`h-3 w-3 rounded-full ${webhook.is_active ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    </div>
                   </div>
                 </div>
               ))}
