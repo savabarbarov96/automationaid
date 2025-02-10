@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Blog from "./pages/Blog";
 import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,13 +19,11 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -35,7 +34,7 @@ const App = () => {
   }, []);
 
   if (loading) {
-    return null; // or a loading spinner
+    return null;
   }
 
   return (
@@ -50,7 +49,13 @@ const App = () => {
             <Route
               path="/auth"
               element={
-                session ? <Navigate to="/" replace /> : <Auth />
+                session ? <Navigate to="/dashboard" replace /> : <Auth />
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                session ? <Dashboard /> : <Navigate to="/auth" replace />
               }
             />
             <Route path="*" element={<NotFound />} />

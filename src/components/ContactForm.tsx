@@ -53,7 +53,7 @@ const ContactForm = ({ isOpen, onClose }: ContactFormProps) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl w-full max-w-md p-8 shadow-xl animate-fade-up m-4">
+      <div className="relative bg-gradient-to-br from-white to-gray-50 rounded-2xl w-full max-w-md p-8 shadow-xl animate-fade-up m-4">
         <button 
           onClick={onClose}
           className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -90,7 +90,6 @@ const ContactForm = ({ isOpen, onClose }: ContactFormProps) => {
               containerClass="w-full"
               inputClass="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
               buttonClass="border border-gray-300 rounded-l-lg"
-              required
             />
           </div>
           

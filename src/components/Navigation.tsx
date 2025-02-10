@@ -1,20 +1,41 @@
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
 
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
 
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : 'bg-transparent'}`}>
@@ -34,10 +55,26 @@ const Navigation = () => {
             <Link to="/blog" className="text-gray-900 hover:text-gray-600 transition-colors">
               Blog
             </Link>
-            <button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} 
-                    className="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition-colors">
-              Contact Us
-            </button>
+            {session ? (
+              <>
+                <Link to="/dashboard" className="text-gray-900 hover:text-gray-600 transition-colors">
+                  Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-900 hover:text-gray-600 transition-colors"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/auth"
+                className="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition-colors"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
 
           {/* Mobile Navigation Button */}
@@ -62,13 +99,34 @@ const Navigation = () => {
                     onClick={() => setIsOpen(false)}>
                 Blog
               </Link>
-              <button onClick={() => {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-                setIsOpen(false);
-              }} 
-                      className="w-full text-left px-3 py-2 text-gray-900 hover:bg-gray-50 rounded-md">
-                Contact Us
-              </button>
+              {session ? (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="block px-3 py-2 text-gray-900 hover:bg-gray-50 rounded-md"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 text-gray-900 hover:bg-gray-50 rounded-md"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/auth"
+                  className="block px-3 py-2 text-gray-900 hover:bg-gray-50 rounded-md"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Sign In
+                </Link>
+              )}
             </div>
           </div>
         )}
