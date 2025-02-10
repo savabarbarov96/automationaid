@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import Navigation from '../components/Navigation';
 import ContactForm from '../components/ContactForm';
-import { Brain, ArrowRight, Globe, MessageSquare } from 'lucide-react';
+import { Brain, ArrowRight, Globe, MessageSquare, Mail, Calendar, Bot } from 'lucide-react';
 
 const Index = () => {
   const [isContactOpen, setIsContactOpen] = useState(false);
@@ -22,6 +21,27 @@ const Index = () => {
       icon: <MessageSquare className="w-8 h-8" />,
       title: "AI Consulting",
       description: "Expert guidance on implementing AI strategies that drive business growth."
+    }
+  ];
+
+  const aiAgents = [
+    {
+      icon: <Mail className="w-12 h-12" />,
+      emoji: "📧",
+      title: "Email Automation Agent",
+      description: "Intelligent email management and automated responses to streamline your communication."
+    },
+    {
+      icon: <Calendar className="w-12 h-12" />,
+      emoji: "📅",
+      title: "Calendar Management Agent",
+      description: "Smart scheduling and calendar optimization to maximize your productivity."
+    },
+    {
+      icon: <Bot className="w-12 h-12" />,
+      emoji: "🤖",
+      title: "Custom AI Assistant",
+      description: "Personalized AI assistant tailored to your specific workflow and requirements."
     }
   ];
 
@@ -75,6 +95,35 @@ const Index = () => {
                 </div>
                 <h3 className="text-xl font-semibold mb-4">{service.title}</h3>
                 <p className="text-gray-600">{service.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* AI Agents Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">Our AI Agents</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Discover our specialized AI agents designed to enhance your productivity
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {aiAgents.map((agent, index) => (
+              <div
+                key={index}
+                className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 animate-fade-up group"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="bg-gray-50 w-20 h-20 rounded-xl flex items-center justify-center mb-6 group-hover:bg-black group-hover:text-white transition-colors">
+                  {agent.icon}
+                </div>
+                <div className="text-4xl mb-4">{agent.emoji}</div>
+                <h3 className="text-xl font-semibold mb-4">{agent.title}</h3>
+                <p className="text-gray-600">{agent.description}</p>
               </div>
             ))}
           </div>

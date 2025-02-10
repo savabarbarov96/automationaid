@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 interface ContactFormProps {
   isOpen: boolean;
@@ -81,13 +83,13 @@ const ContactForm = ({ isOpen, onClose }: ContactFormProps) => {
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
               Phone Number
             </label>
-            <input
-              type="tel"
-              id="phone"
+            <PhoneInput
+              country={'us'}
               value={formData.phone}
-              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
-              placeholder="Your phone number"
+              onChange={(phone) => setFormData(prev => ({ ...prev, phone }))}
+              containerClass="w-full"
+              inputClass="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+              buttonClass="border border-gray-300 rounded-l-lg"
               required
             />
           </div>
