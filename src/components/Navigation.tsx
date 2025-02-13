@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LayoutDashboard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const Navigation = () => {
@@ -57,8 +57,12 @@ const Navigation = () => {
             </Link>
             {session ? (
               <>
-                <Link to="/dashboard" className="text-gray-900 hover:text-gray-600 transition-colors">
-                  Dashboard
+                <Link
+                  to="/dashboard"
+                  className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 flex items-center space-x-2"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="font-semibold">Dashboard</span>
                 </Link>
                 <button
                   onClick={handleLogout}

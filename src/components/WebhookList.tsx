@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Plus, Trash2, Edit2, Clock, Play, Terminal } from 'lucide-react';
+import { Plus, Trash2, Edit2, Clock, Play, Terminal, AlertCircle } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -16,7 +15,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface WebhookListProps {
   webhooks: any[];
@@ -38,15 +45,35 @@ export const WebhookList = ({
   onExecute
 }: WebhookListProps) => {
   const [newWebhookUrl, setNewWebhookUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
   const [editingWebhook, setEditingWebhook] = useState<any>(null);
   const [schedulingWebhook, setSchedulingWebhook] = useState<any>(null);
   const [isExecuting, setIsExecuting] = useState<string | null>(null);
+  const [frequency, setFrequency] = useState('custom');
+  const [customCron, setCustomCron] = useState('');
+
+  const validateUrl = (url: string) => {
+    try {
+      new URL(url);
+      setUrlError('');
+      return true;
+    } catch {
+      setUrlError('Please enter a valid URL');
+      return false;
+    }
+  };
 
   const handleAdd = async () => {
-    if (!newWebhookUrl) return;
+    if (!newWebhookUrl) {
+      setUrlError('URL is required');
+      return;
+    }
+    if (!validateUrl(newWebhookUrl)) return;
+    
     const success = await onAdd(newWebhookUrl);
     if (success) {
       setNewWebhookUrl('');
+      setUrlError('');
     }
   };
 
@@ -54,6 +81,20 @@ export const WebhookList = ({
     setIsExecuting(webhook.id);
     await onExecute(webhook);
     setIsExecuting(null);
+  };
+
+  const predefinedSchedules = {
+    'every-minute': '* * * * *',
+    'every-5-minutes': '*/5 * * * *',
+    'hourly': '0 * * * *',
+    'daily': '0 0 * * *',
+    'weekly': '0 0 * * 0',
+    'monthly': '0 0 1 * *',
+  };
+
+  const handleScheduleUpdate = async (webhook: any) => {
+    const cronExpression = frequency === 'custom' ? customCron : predefinedSchedules[frequency];
+    await onUpdateSchedule(webhook.id, cronExpression);
   };
 
   return (
@@ -72,11 +113,23 @@ export const WebhookList = ({
               <SheetTitle>Add New Webhook</SheetTitle>
             </SheetHeader>
             <div className="grid gap-4 py-4">
-              <Input
-                placeholder="Enter webhook URL"
-                value={newWebhookUrl}
-                onChange={(e) => setNewWebhookUrl(e.target.value)}
-              />
+              <div className="space-y-2">
+                <Input
+                  placeholder="Enter webhook URL"
+                  value={newWebhookUrl}
+                  onChange={(e) => {
+                    setNewWebhookUrl(e.target.value);
+                    validateUrl(e.target.value);
+                  }}
+                  className={urlError ? 'border-red-500' : ''}
+                />
+                {urlError && (
+                  <div className="flex items-center text-red-500 text-sm">
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    {urlError}
+                  </div>
+                )}
+              </div>
               <Button onClick={handleAdd}>Add Webhook</Button>
             </div>
           </SheetContent>
@@ -170,20 +223,49 @@ export const WebhookList = ({
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Set Schedule</DialogTitle>
+                        <DialogDescription>
+                          Choose how often this webhook should be executed
+                        </DialogDescription>
                       </DialogHeader>
-                      <Input
-                        placeholder="Enter cron schedule (e.g., * * * * *)"
-                        defaultValue={webhook.schedule || ''}
-                        onChange={(e) => setSchedulingWebhook({
-                          ...webhook,
-                          schedule: e.target.value
-                        })}
-                      />
-                      <Button
-                        onClick={() => onUpdateSchedule(webhook.id, schedulingWebhook.schedule)}
-                      >
-                        Save Schedule
-                      </Button>
+                      <div className="grid gap-4 py-4">
+                        <Select
+                          value={frequency}
+                          onValueChange={setFrequency}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="every-minute">Every minute</SelectItem>
+                            <SelectItem value="every-5-minutes">Every 5 minutes</SelectItem>
+                            <SelectItem value="hourly">Every hour</SelectItem>
+                            <SelectItem value="daily">Every day</SelectItem>
+                            <SelectItem value="weekly">Every week</SelectItem>
+                            <SelectItem value="monthly">Every month</SelectItem>
+                            <SelectItem value="custom">Custom schedule</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {frequency === 'custom' && (
+                          <div className="space-y-2">
+                            <Input
+                              placeholder="Enter cron expression (e.g., * * * * *)"
+                              value={customCron}
+                              onChange={(e) => setCustomCron(e.target.value)}
+                            />
+                            <p className="text-sm text-gray-500">
+                              Format: minute hour day month weekday
+                            </p>
+                          </div>
+                        )}
+
+                        <Button
+                          onClick={() => handleScheduleUpdate(webhook)}
+                          className="w-full"
+                        >
+                          Save Schedule
+                        </Button>
+                      </div>
                     </DialogContent>
                   </Dialog>
 

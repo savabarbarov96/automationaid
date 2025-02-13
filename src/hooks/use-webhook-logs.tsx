@@ -33,46 +33,65 @@ export const useWebhookLogs = (session: any) => {
 
   const executeWebhook = async (webhook: any) => {
     try {
-      const response = await fetch(webhook.url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ timestamp: new Date().toISOString() }),
-      });
-
-      const responseData = await response.text();
-      const status = response.ok ? 'success' : 'error';
-
-      const { error } = await supabase
+      // First, create a log entry for the attempt
+      const { data: logEntry, error: logError } = await supabase
         .from('webhook_logs')
         .insert([{
           webhook_id: webhook.id,
           user_id: session.user.id,
           request_data: { timestamp: new Date().toISOString() },
-          response_data: { status: response.status, data: responseData },
-          status
-        }]);
+          status: 'pending'
+        }])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (logError) throw logError;
 
-      toast({
-        title: status === 'success' ? "Success" : "Error",
-        description: `Webhook ${status === 'success' ? 'executed' : 'failed'}`,
-        variant: status === 'success' ? "default" : "destructive",
-      });
+      try {
+        const response = await fetch(webhook.url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ timestamp: new Date().toISOString() }),
+        });
+
+        const responseData = await response.text();
+        const status = response.ok ? 'success' : 'error';
+
+        // Update the log entry with the response
+        await supabase
+          .from('webhook_logs')
+          .update({
+            response_data: { status: response.status, data: responseData },
+            status
+          })
+          .eq('id', logEntry.id);
+
+        toast({
+          title: status === 'success' ? "Success" : "Error",
+          description: `Webhook ${status === 'success' ? 'executed' : 'failed'}`,
+          variant: status === 'success' ? "default" : "destructive",
+        });
+
+      } catch (error: any) {
+        // Update the log entry with the error
+        await supabase
+          .from('webhook_logs')
+          .update({
+            response_data: { error: error.message },
+            status: 'error'
+          })
+          .eq('id', logEntry.id);
+
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
 
       fetchLogs();
       return true;
     } catch (error: any) {
-      await supabase
-        .from('webhook_logs')
-        .insert([{
-          webhook_id: webhook.id,
-          user_id: session.user.id,
-          request_data: { timestamp: new Date().toISOString() },
-          response_data: { error: error.message },
-          status: 'error'
-        }]);
-
       toast({
         title: "Error",
         description: error.message,
