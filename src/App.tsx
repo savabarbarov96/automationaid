@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Blog from "./pages/Blog";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,12 @@ const App = () => {
               path="/dashboard"
               element={
                 session ? <Dashboard /> : <Navigate to="/auth" replace />
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                session ? <Settings /> : <Navigate to="/auth" replace />
               }
             />
             <Route path="*" element={<NotFound />} />
