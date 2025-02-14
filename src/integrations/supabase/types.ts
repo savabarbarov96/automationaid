@@ -48,6 +48,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_settings: {
+        Row: {
+          created_at: string
+          discord: boolean | null
+          discord_webhook_url: string | null
+          email: boolean | null
+          id: string
+          slack: boolean | null
+          slack_webhook_url: string | null
+          updated_at: string
+          user_id: string | null
+          viber: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          discord?: boolean | null
+          discord_webhook_url?: string | null
+          email?: boolean | null
+          id?: string
+          slack?: boolean | null
+          slack_webhook_url?: string | null
+          updated_at?: string
+          user_id?: string | null
+          viber?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          discord?: boolean | null
+          discord_webhook_url?: string | null
+          email?: boolean | null
+          id?: string
+          slack?: boolean | null
+          slack_webhook_url?: string | null
+          updated_at?: string
+          user_id?: string | null
+          viber?: boolean | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

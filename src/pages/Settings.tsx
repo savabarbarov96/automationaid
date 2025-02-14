@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import NotificationSettings from '@/components/settings/NotificationSettings';
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -88,6 +89,8 @@ const Settings = () => {
               </Button>
             </CardContent>
           </Card>
+
+          <NotificationSettings />
 
           <Card>
             <CardHeader>
