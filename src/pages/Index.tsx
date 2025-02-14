@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Navigation from '../components/Navigation';
 import ContactForm from '../components/ContactForm';
+import OnboardingFlow from '../components/OnboardingFlow';
 import { Brain, ArrowRight, Globe, MessageSquare, Mail, Calendar, Bot, ChevronLeft, ChevronRight, CheckCircle2, BrainCircuit, TableProperties, FileSpreadsheet, Binary, Network, Database } from 'lucide-react';
 import {
   Carousel,
@@ -128,7 +129,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <Navigation />
-      <ContactForm isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      <OnboardingFlow isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
       
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
