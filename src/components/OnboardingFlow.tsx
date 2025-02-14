@@ -1,10 +1,13 @@
 
 import { useState } from 'react';
-import { Check, ChevronLeft, ChevronRight, Mail, Phone, MessageSquare } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import StepIndicator from './onboarding/StepIndicator';
+import PurposeStep from './onboarding/PurposeStep';
+import ContactStep from './onboarding/ContactStep';
+import FinalDetailsStep from './onboarding/FinalDetailsStep';
 
 interface OnboardingFlowProps {
   isOpen: boolean;
@@ -50,10 +53,6 @@ const OnboardingFlow = ({ isOpen, onClose }: OnboardingFlowProps) => {
     setStep(step + 1);
   };
 
-  const handlePrevStep = () => {
-    setStep(step - 1);
-  };
-
   const handleSubmit = async () => {
     setLoading(true);
     try {
@@ -96,7 +95,7 @@ const OnboardingFlow = ({ isOpen, onClose }: OnboardingFlowProps) => {
         <div className="absolute top-4 right-4 flex space-x-2">
           {step > 1 && (
             <button 
-              onClick={handlePrevStep}
+              onClick={() => setStep(step - 1)}
               className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
             >
               <ChevronLeft size={20} />
@@ -110,43 +109,13 @@ const OnboardingFlow = ({ isOpen, onClose }: OnboardingFlowProps) => {
           </button>
         </div>
 
-        <div className="mb-8">
-          <div className="flex justify-between mb-2">
-            {[1, 2, 3, 4].map((s) => (
-              <div
-                key={s}
-                className={`w-1/4 h-1 rounded-full mx-1 transition-colors ${
-                  s === step ? 'bg-black' : s < step ? 'bg-gray-400' : 'bg-gray-200'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
+        <StepIndicator currentStep={step} totalSteps={4} />
 
         {step === 1 && (
-          <div className="space-y-6 animate-fade">
-            <h2 className="text-2xl font-bold mb-6">What brings you here?</h2>
-            {[
-              { value: 'personal', label: 'I want an AI Agent for myself' },
-              { value: 'business', label: 'I need AI for my business' },
-              { value: 'looking', label: 'Just looking around' }
-            ].map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setFormData({ ...formData, purpose: option.value })}
-                className={`w-full p-4 rounded-xl border-2 transition-all ${
-                  formData.purpose === option.value
-                    ? 'border-black bg-black text-white'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span>{option.label}</span>
-                  {formData.purpose === option.value && <Check size={20} />}
-                </div>
-              </button>
-            ))}
-          </div>
+          <PurposeStep
+            selectedPurpose={formData.purpose}
+            onSelect={(purpose) => setFormData({ ...formData, purpose })}
+          />
         )}
 
         {step === 2 && (
@@ -163,77 +132,19 @@ const OnboardingFlow = ({ isOpen, onClose }: OnboardingFlowProps) => {
         )}
 
         {step === 3 && (
-          <div className="space-y-6 animate-fade">
-            <h2 className="text-2xl font-bold mb-6">How should we contact you?</h2>
-            {[
-              { value: 'phone', label: 'Phone', icon: Phone },
-              { value: 'email', label: 'Email', icon: Mail },
-              { value: 'viber', label: 'Viber', icon: MessageSquare },
-              { value: 'other', label: 'Other', icon: MessageSquare }
-            ].map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setFormData({ ...formData, contact_preference: option.value })}
-                className={`w-full p-4 rounded-xl border-2 transition-all ${
-                  formData.contact_preference === option.value
-                    ? 'border-black bg-black text-white'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <option.icon size={20} />
-                    <span>{option.label}</span>
-                  </div>
-                  {formData.contact_preference === option.value && <Check size={20} />}
-                </div>
-              </button>
-            ))}
-            {formData.contact_preference === 'other' && (
-              <Input
-                value={formData.contact_other}
-                onChange={(e) => setFormData({ ...formData, contact_other: e.target.value })}
-                placeholder="Please specify"
-                className="w-full mt-4"
-              />
-            )}
-          </div>
+          <ContactStep
+            contactPreference={formData.contact_preference}
+            contactOther={formData.contact_other}
+            onSelectPreference={(preference) => setFormData({ ...formData, contact_preference: preference })}
+            onOtherChange={(value) => setFormData({ ...formData, contact_other: value })}
+          />
         )}
 
         {step === 4 && (
-          <div className="space-y-6 animate-fade">
-            <h2 className="text-2xl font-bold mb-6">Final Details</h2>
-            {formData.contact_preference === 'phone' && (
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                <Input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="Your phone number"
-                  required
-                />
-              </div>
-            )}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Company (Optional)</label>
-              <Input
-                value={formData.company}
-                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                placeholder="Your company name"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Message</label>
-              <Textarea
-                value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                placeholder="Tell us about your AI needs"
-                rows={4}
-                required
-              />
-            </div>
-          </div>
+          <FinalDetailsStep
+            formData={formData}
+            onChange={(field, value) => setFormData({ ...formData, [field]: value })}
+          />
         )}
 
         <div className="mt-8">

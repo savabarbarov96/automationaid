@@ -1,29 +1,56 @@
 
 import Navigation from '../components/Navigation';
-import { ArrowRight } from 'lucide-react';
+import BlogCard from '../components/blog/BlogCard';
 
 const Blog = () => {
   const posts = [
     {
-      title: "The Future of AI in Business",
-      excerpt: "Discover how artificial intelligence is reshaping the business landscape and what it means for your company.",
+      title: "How AI Agents Transform Customer Service",
+      excerpt: "Discover how AI agents are revolutionizing customer support with 24/7 availability, instant responses, and personalized interactions.",
       date: "March 15, 2024",
       readTime: "5 min read",
-      category: "AI Trends"
+      category: "Customer Service",
+      slug: "ai-agents-transform-customer-service"
     },
     {
-      title: "Building Custom AI Agents",
-      excerpt: "A deep dive into the process of creating tailored AI solutions for specific business needs.",
+      title: "AI Automation for Small Businesses",
+      excerpt: "Learn how small businesses can leverage AI agents to automate repetitive tasks, improve efficiency, and reduce operational costs.",
       date: "March 12, 2024",
       readTime: "7 min read",
-      category: "Development"
+      category: "Business Automation",
+      slug: "ai-automation-small-business"
     },
     {
-      title: "AI Integration Best Practices",
-      excerpt: "Learn the key strategies for successfully integrating AI solutions into your existing business processes.",
+      title: "The Future of AI in Healthcare",
+      excerpt: "Explore how AI agents are improving patient care, streamlining administrative tasks, and supporting medical professionals.",
       date: "March 10, 2024",
       readTime: "6 min read",
-      category: "Implementation"
+      category: "Healthcare",
+      slug: "ai-future-healthcare"
+    },
+    {
+      title: "AI-Powered Sales Optimization",
+      excerpt: "Discover how AI agents can analyze customer data, predict buying patterns, and help sales teams close more deals.",
+      date: "March 8, 2024",
+      readTime: "5 min read",
+      category: "Sales",
+      slug: "ai-sales-optimization"
+    },
+    {
+      title: "Implementing AI in Manufacturing",
+      excerpt: "Learn how AI agents can optimize production processes, predict maintenance needs, and improve quality control.",
+      date: "March 5, 2024",
+      readTime: "8 min read",
+      category: "Manufacturing",
+      slug: "ai-manufacturing-implementation"
+    },
+    {
+      title: "AI for Real Estate: A Game Changer",
+      excerpt: "See how AI agents are transforming property management, lead generation, and customer interactions in real estate.",
+      date: "March 3, 2024",
+      readTime: "6 min read",
+      category: "Real Estate",
+      slug: "ai-real-estate-transformation"
     }
   ];
 
@@ -31,46 +58,22 @@ const Blog = () => {
     <div className="min-h-screen">
       <Navigation />
       
-      {/* Blog Header */}
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl font-bold mb-8 animate-fade-down">
-            AI Insights & Updates
+            AI Insights & Industry Updates
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto animate-fade-down" style={{ animationDelay: "0.1s" }}>
-            Stay informed about the latest developments in AI technology and how they can benefit your business
+            Discover how AI agents are transforming different industries and learn about the latest developments in AI technology
           </p>
         </div>
       </section>
 
-      {/* Blog Posts */}
       <section className="pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map((post, index) => (
-              <article
-                key={index}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 animate-fade-up"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="aspect-video bg-gray-100" />
-                <div className="p-6">
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                    <span>{post.date}</span>
-                    <span>•</span>
-                    <span>{post.readTime}</span>
-                  </div>
-                  <span className="inline-block px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800 mb-4">
-                    {post.category}
-                  </span>
-                  <h2 className="text-xl font-semibold mb-3">{post.title}</h2>
-                  <p className="text-gray-600 mb-6">{post.excerpt}</p>
-                  <button className="text-black font-medium inline-flex items-center gap-2 hover:gap-3 transition-all">
-                    Read More
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </article>
+              <BlogCard key={post.slug} {...post} />
             ))}
           </div>
         </div>
