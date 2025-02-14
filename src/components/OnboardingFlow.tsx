@@ -57,15 +57,23 @@ const OnboardingFlow = ({ isOpen, onClose }: OnboardingFlowProps) => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Save to database
+      const { error: dbError } = await supabase
         .from('contact_submissions')
         .insert([formData]);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
+
+      // Send confirmation email
+      const { error: emailError } = await supabase.functions.invoke('send-onboarding-email', {
+        body: formData
+      });
+
+      if (emailError) throw emailError;
 
       toast({
         title: "Message sent!",
-        description: "We'll get back to you soon.",
+        description: "We'll get back to you soon. Check your email for confirmation.",
       });
       onClose();
     } catch (error: any) {
