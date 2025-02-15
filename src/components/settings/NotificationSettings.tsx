@@ -39,7 +39,8 @@ const NotificationSettings = () => {
       const { data, error } = await supabase
         .from('notification_settings')
         .select('*')
-        .single();
+        .eq('user_id', session.user.id)
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -73,13 +74,16 @@ const NotificationSettings = () => {
 
   const handleSettingChange = async (setting: keyof NotificationSettings, value: boolean | string) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
       const newSettings = { ...settings, [setting]: value };
       setSettings(newSettings);
 
       const { error } = await supabase
         .from('notification_settings')
         .update(newSettings)
-        .eq('user_id', (await supabase.auth.getSession()).data.session?.user.id);
+        .eq('user_id', session.user.id);
 
       if (error) throw error;
 
