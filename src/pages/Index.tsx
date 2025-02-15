@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Navigation from '../components/Navigation';
 import OnboardingFlow from '../components/OnboardingFlow';
@@ -127,7 +126,20 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      <div className="parallax-bg"></div>
+      <div className="geometric-shapes">
+        <img
+          src="/lovable-uploads/bb40ce05-8828-4167-9b61-cfaf21d8f7bb.png"
+          alt="Geometric Shape 1"
+          className="geometric-shape shape-1"
+        />
+        <img
+          src="/lovable-uploads/b0cbe4c5-707c-4637-8e2f-8070357e9e20.png"
+          alt="Geometric Shape 2"
+          className="geometric-shape shape-2"
+        />
+      </div>
       <Navigation />
       <OnboardingFlow isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
       
