@@ -17,6 +17,10 @@ export default {
       fontFamily: {
         sans: ["Inter", "sans-serif"],
       },
+      zIndex: {
+        '-10': '-10',
+        '-9': '-9',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
