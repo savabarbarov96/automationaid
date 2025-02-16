@@ -27,10 +27,10 @@ jobs:
             echo "Error: SERVER_IP or SERVER_USER is not defined in secrets."
             exit 1
           fi
-          # Force pseudo-terminal allocation with -tt to help with connection issues
           ssh -tt -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP << 'EOF'
           cd /var/www/automationaid
-          git pull origin main
+          git fetch origin main
+          git reset --hard origin/main
           npm install
           npm run build
           sudo systemctl reload nginx
