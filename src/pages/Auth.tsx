@@ -16,28 +16,42 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate('/');
+    // Initialize Supabase auth listener
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log('Existing session found, redirecting to home');
+          navigate('/');
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
       }
-    });
+    };
+
+    initAuth();
 
     // Set up auth state listener
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
       if (session) {
         navigate('/');
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('Cleaning up auth listener');
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    console.log(`Attempting to ${isSignUp ? 'sign up' : 'sign in'} user`);
     
     try {
       if (isSignUp) {
@@ -45,7 +59,10 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}/auth`,
+            data: {
+              email,
+            },
           },
         });
         if (error) throw error;
@@ -59,9 +76,11 @@ const Auth = () => {
           password,
         });
         if (error) throw error;
+        console.log('Sign in successful');
         navigate('/');
       }
     } catch (error: any) {
+      console.error('Auth error:', error.message);
       toast({
         title: "Error",
         description: error.message,
