@@ -19,15 +19,12 @@ jobs:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Deploy to Server
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
-          if [ -z "$SERVER_IP" ] || [ -z "$SERVER_USER" ]; then
-            echo "Error: SERVER_IP or SERVER_USER not defined"
+          if [ -z "${{ secrets.SERVER_IP }}" ] || [ -z "${{ secrets.SERVER_USER }}" ]; then
+            echo "Error: SERVER_IP or SERVER_USER is not defined in secrets."
             exit 1
           fi
-          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
           cd /var/www/automationaid
           git pull origin main
           npm install
@@ -40,4 +37,4 @@ jobs:
         uses: Ilshidur/action-discord@0.3.2
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          message: "Deployment to server failed. Please check GitHub Actions logs."
+          message: "🚨 Deployment failed! Check GitHub Actions logs for details."
