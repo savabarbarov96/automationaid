@@ -36,5 +36,5 @@ jobs:
         if: failure()
         uses: Ilshidur/action-discord@0.3.2
         with:
-          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL || secrets.DISCORD_WEBHOOK }}
           message: "🚨 Deployment failed! Check GitHub Actions logs for details."
