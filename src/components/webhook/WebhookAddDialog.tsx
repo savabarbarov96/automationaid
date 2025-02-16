@@ -91,6 +91,12 @@ export const WebhookAddDialog = ({ onAdd }: WebhookAddDialogProps) => {
     if (!newWebhookUrl || !validateUrl(newWebhookUrl)) return;
     
     setIsTestingWebhook(true);
+    console.log('Testing webhook:', {
+      url: newWebhookUrl,
+      method: selectedMethod,
+      body: webhookBody ? JSON.parse(webhookBody) : undefined
+    });
+
     try {
       const response = await fetch(newWebhookUrl, { 
         method: selectedMethod,
@@ -100,6 +106,12 @@ export const WebhookAddDialog = ({ onAdd }: WebhookAddDialogProps) => {
         })
       });
       
+      const responseData = await response.json();
+      console.log('Webhook test response:', {
+        status: response.status,
+        data: responseData
+      });
+
       if (response.ok) {
         toast({
           title: "Success",
@@ -113,6 +125,7 @@ export const WebhookAddDialog = ({ onAdd }: WebhookAddDialogProps) => {
         });
       }
     } catch (error) {
+      console.error('Webhook test error:', error);
       toast({
         title: "Error",
         description: "Could not test webhook. Please check the URL and try again.",

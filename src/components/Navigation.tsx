@@ -18,19 +18,28 @@ const Navigation = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-black px-3 py-2 text-sm font-medium transition-colors">
+            <Link 
+              to="/" 
+              className="text-gray-700 hover:text-black px-3 py-2 text-sm font-bold transition-all duration-200 hover:scale-105 transform"
+            >
               Home
             </Link>
-            <Link to="/dashboard" className="text-gray-700 hover:text-black px-3 py-2 text-sm font-medium transition-colors">
+            <Link 
+              to="/dashboard" 
+              className="text-gray-700 hover:text-black px-3 py-2 text-sm font-bold transition-all duration-200 hover:scale-105 transform"
+            >
               Dashboard
             </Link>
-            <Link to="/blog" className="text-gray-700 hover:text-black px-3 py-2 text-sm font-medium transition-colors">
+            <Link 
+              to="/blog" 
+              className="text-gray-700 hover:text-black px-3 py-2 text-sm font-bold transition-all duration-200 hover:scale-105 transform"
+            >
               Blog
             </Link>
             <Button
               onClick={handleSignOut}
               variant="ghost"
-              className="text-gray-700 hover:text-black font-medium"
+              className="text-gray-700 hover:text-black font-bold transition-all duration-200 hover:scale-105 transform"
             >
               Sign Out
             </Button>
