@@ -1,15 +1,5 @@
-
 import { useState } from 'react';
-import { Plus, Trash2, Edit2, Clock, Play, Terminal, AlertCircle, Wand2 } from 'lucide-react';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Plus, Trash2, Edit2, Clock, Play, Terminal, AlertCircle, Wand2, Power } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +8,11 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -30,11 +25,12 @@ import { useToast } from "@/hooks/use-toast";
 interface WebhookListProps {
   webhooks: any[];
   isLoading: boolean;
-  onAdd: (url: string, name: string, method: string) => Promise<boolean>;
+  onAdd: (url: string, name: string, method: string, body?: object) => Promise<boolean>;
   onDelete: (id: string) => Promise<void>;
   onUpdateName: (id: string, name: string) => Promise<boolean>;
   onUpdateSchedule: (id: string, schedule: string) => Promise<boolean>;
   onExecute: (webhook: any) => Promise<boolean>;
+  onToggleStatus: (id: string, is_active: boolean) => Promise<boolean>;
 }
 
 export const WebhookList = ({
@@ -44,7 +40,8 @@ export const WebhookList = ({
   onDelete,
   onUpdateName,
   onUpdateSchedule,
-  onExecute
+  onExecute,
+  onToggleStatus
 }: WebhookListProps) => {
   const [newWebhookUrl, setNewWebhookUrl] = useState('');
   const [newWebhookName, setNewWebhookName] = useState('');
@@ -55,7 +52,8 @@ export const WebhookList = ({
   const [frequency, setFrequency] = useState('custom');
   const [customCron, setCustomCron] = useState('');
   const [isTestingWebhook, setIsTestingWebhook] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState('POST');
+  const [selectedMethod, setSelectedMethod] = useState('GET');
+  const [webhookBody, setWebhookBody] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -82,10 +80,30 @@ export const WebhookList = ({
     }
     if (!validateUrl(newWebhookUrl)) return;
     
-    const success = await onAdd(newWebhookUrl, newWebhookName || `Webhook-${Math.random().toString(36).substring(7)}`, selectedMethod);
+    let body;
+    if (selectedMethod === 'POST' && webhookBody) {
+      try {
+        body = JSON.parse(webhookBody);
+      } catch (error) {
+        toast({
+          title: "Invalid JSON",
+          description: "Please enter valid JSON for the webhook body",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    const success = await onAdd(
+      newWebhookUrl, 
+      newWebhookName || `Webhook-${Math.random().toString(36).substring(7)}`, 
+      selectedMethod,
+      body
+    );
     if (success) {
       setNewWebhookUrl('');
       setNewWebhookName('');
+      setWebhookBody('');
       setUrlError('');
       setIsAddDialogOpen(false);
     }
@@ -96,7 +114,14 @@ export const WebhookList = ({
     
     setIsTestingWebhook(true);
     try {
-      const response = await fetch(newWebhookUrl, { method: selectedMethod });
+      const response = await fetch(newWebhookUrl, { 
+        method: selectedMethod,
+        ...(selectedMethod === 'POST' && webhookBody && {
+          headers: { 'Content-Type': 'application/json' },
+          body: webhookBody
+        })
+      });
+      
       if (response.ok) {
         toast({
           title: "Success",
@@ -200,6 +225,16 @@ export const WebhookList = ({
                   <SelectItem value="POST">POST</SelectItem>
                 </SelectContent>
               </Select>
+              {selectedMethod === 'POST' && (
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-500">Request Body (JSON)</label>
+                  <Textarea
+                    placeholder="Enter JSON body"
+                    value={webhookBody}
+                    onChange={(e) => setWebhookBody(e.target.value)}
+                  />
+                </div>
+              )}
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -229,11 +264,18 @@ export const WebhookList = ({
           {webhooks.map((webhook) => (
             <div
               key={webhook.id}
-              className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+              className={`p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors ${
+                !webhook.is_active ? 'opacity-60' : ''
+              }`}
             >
               <div className="flex justify-between items-center">
                 <div className="space-y-1">
-                  <p className="font-medium">{webhook.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{webhook.name}</p>
+                    <Badge variant={webhook.method === 'GET' ? 'secondary' : 'default'}>
+                      {webhook.method}
+                    </Badge>
+                  </div>
                   <p className="text-sm text-gray-500">{webhook.url}</p>
                   {webhook.schedule && (
                     <p className="text-sm text-gray-500">
@@ -245,21 +287,27 @@ export const WebhookList = ({
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="bg-green-500 text-white hover:bg-green-600 transition-all hover:scale-105"
-                    onClick={() => handleExecution(webhook)}
-                    disabled={isExecuting === webhook.id}
-                  >
-                    {isExecuting === webhook.id ? (
-                      <div className="animate-spin">
-                        <Terminal className="h-4 w-4" />
-                      </div>
-                    ) : (
-                      <Play className="h-4 w-4" />
-                    )}
-                  </Button>
+                  <Switch
+                    checked={webhook.is_active}
+                    onCheckedChange={(checked) => onToggleStatus(webhook.id, checked)}
+                  />
+                  {webhook.is_active && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="bg-green-500 text-white hover:bg-green-600 transition-all hover:scale-105"
+                      onClick={() => handleExecution(webhook)}
+                      disabled={isExecuting === webhook.id}
+                    >
+                      {isExecuting === webhook.id ? (
+                        <div className="animate-spin">
+                          <Terminal className="h-4 w-4" />
+                        </div>
+                      ) : (
+                        <Play className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
 
                   <Dialog>
                     <DialogTrigger asChild>
@@ -362,6 +410,13 @@ export const WebhookList = ({
                   <div className={`h-3 w-3 rounded-full ${webhook.is_active ? 'bg-green-500' : 'bg-gray-300'}`} />
                 </div>
               </div>
+              {webhook.method === 'POST' && webhook.body && (
+                <div className="mt-2 p-2 bg-gray-50 rounded text-sm font-mono">
+                  <pre className="whitespace-pre-wrap">
+                    {JSON.stringify(webhook.body, null, 2)}
+                  </pre>
+                </div>
+              )}
             </div>
           ))}
         </div>

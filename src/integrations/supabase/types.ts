@@ -110,6 +110,7 @@ export type Database = {
       }
       webhook_integrations: {
         Row: {
+          body: Json | null
           created_at: string
           description: string | null
           id: string
@@ -122,6 +123,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          body?: Json | null
           created_at?: string
           description?: string | null
           id?: string
@@ -134,6 +136,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          body?: Json | null
           created_at?: string
           description?: string | null
           id?: string

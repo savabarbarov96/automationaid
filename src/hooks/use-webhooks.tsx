@@ -27,7 +27,7 @@ export const useWebhooks = (session: any) => {
     }
   };
 
-  const addWebhook = async (url: string, name: string, method: string) => {
+  const addWebhook = async (url: string, name: string, method: string, body?: object) => {
     try {
       const { error } = await supabase
         .from('webhook_integrations')
@@ -35,6 +35,7 @@ export const useWebhooks = (session: any) => {
           url,
           name,
           method,
+          body: body || {},
           user_id: session.user.id 
         }]);
 
@@ -45,6 +46,31 @@ export const useWebhooks = (session: any) => {
         description: "Webhook added successfully",
       });
       
+      fetchWebhooks();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const toggleWebhookStatus = async (id: string, is_active: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('webhook_integrations')
+        .update({ is_active })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Webhook ${is_active ? 'enabled' : 'disabled'} successfully`,
+      });
       fetchWebhooks();
       return true;
     } catch (error: any) {
@@ -137,6 +163,7 @@ export const useWebhooks = (session: any) => {
     addWebhook,
     deleteWebhook,
     updateWebhookName,
-    updateWebhookSchedule
+    updateWebhookSchedule,
+    toggleWebhookStatus
   };
 };
