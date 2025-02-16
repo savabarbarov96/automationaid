@@ -24,13 +24,18 @@ jobs:
           SERVER_IP: ${{ secrets.SERVER_IP }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
+          # Ensure that SERVER_IP and SERVER_USER are set
+          if [ -z "$SERVER_IP" ] || [ -z "$SERVER_USER" ]; then
+            echo "Error: SERVER_IP or SERVER_USER is not defined in secrets."
+            exit 1
+          fi
           ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP << EOF
             cd /var/www/automationaid
             git pull origin main
             npm install
             npm run build
             sudo systemctl reload nginx
-          EOF
+EOF
 
       - name: Notify Discord on Failure
         if: failure()
