@@ -1,4 +1,4 @@
-name: Deploy Website
+name: Deploy to Server
 
 on:
   push:
@@ -7,13 +7,14 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    name: Deploy Application
+    runs-on: ubuntu-20.04
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set up SSH agent
+      - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
@@ -23,10 +24,18 @@ jobs:
           SERVER_IP: ${{ secrets.SERVER_IP }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
-          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP << 'EOF'
+          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP << EOF
             cd /var/www/automationaid
             git pull origin main
             npm install
             npm run build
             sudo systemctl reload nginx
           EOF
+        continue-on-error: true
+
+      - name: Notify Discord on Failure
+        if: failure()
+        uses: Ilshidur/action-discord@2.0.2
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          message: "Deployment to server failed. Please check the GitHub Actions logs for details."
