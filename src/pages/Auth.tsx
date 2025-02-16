@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,8 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const isSignUp = searchParams.get('mode') === 'signup';
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -19,14 +20,7 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        navigate('/');
-      } else {
+      if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -36,6 +30,13 @@ const Auth = () => {
           title: "Success!",
           description: "Please check your email to verify your account.",
         });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        navigate('/');
       }
     } catch (error: any) {
       toast({
@@ -50,11 +51,22 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-sm">
+      <div className="max-w-md w-full space-y-8">
         <div>
+          <img
+            src="/lovable-uploads/c0110f52-c24f-4c1a-8c0c-05941815b26e.png"
+            alt="Logo"
+            className="mx-auto h-12 w-auto"
+          />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {isLogin ? 'Sign in to your account' : 'Create your account'}
+            {isSignUp ? 'Create your account' : 'Welcome back'}
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            {isSignUp 
+              ? 'Join us and start building amazing things'
+              : 'Sign in to your account to continue'
+            }
+          </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleAuth}>
           <div className="rounded-md space-y-4">
@@ -65,6 +77,7 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email address"
+                className="h-12"
               />
             </div>
             <div>
@@ -75,6 +88,7 @@ const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 minLength={6}
+                className="h-12"
               />
             </div>
           </div>
@@ -82,21 +96,20 @@ const Auth = () => {
           <div>
             <Button
               type="submit"
-              className="w-full"
+              className={`w-full h-12 ${isSignUp ? 'bg-green-600 hover:bg-green-700' : 'bg-black hover:bg-gray-800'}`}
               disabled={loading}
             >
-              {loading ? 'Loading...' : isLogin ? 'Sign in' : 'Sign up'}
+              {loading ? 'Loading...' : (isSignUp ? 'Sign up' : 'Sign in')}
             </Button>
           </div>
           
           <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
+            <a
+              href={isSignUp ? '/auth' : '/auth?mode=signup'}
               className="text-sm text-gray-600 hover:text-gray-900"
             >
-              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-            </button>
+              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            </a>
           </div>
         </form>
       </div>

@@ -1,36 +1,65 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Settings, Bell, Mail, MessageCircle } from 'lucide-react';
+import { Menu, X, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import { useToast } from '@/hooks/use-toast';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [session, setSession] = useState<any>(null);
+  const [isContactOpen, setIsContactOpen] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    company: '',
+    message: '',
+    email: '',
+    phone: ''
+  });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (!session) {
-        // If no session, clear any stale data
         supabase.auth.signOut();
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session);
       setSession(session);
       
       if (event === 'SIGNED_OUT') {
-        // Clear any auth data and redirect
+        // Clear cache and storage
         await supabase.auth.signOut();
+        localStorage.clear();
+        sessionStorage.clear();
+        // Clear all application caches
+        if ('caches' in window) {
+          try {
+            const cacheKeys = await caches.keys();
+            await Promise.all(cacheKeys.map(key => caches.delete(key)));
+          } catch (err) {
+            console.error('Error clearing caches:', err);
+          }
+        }
         navigate('/');
       } else if (event === 'SIGNED_IN') {
-        // Refresh the page to ensure clean state
         window.location.reload();
       }
     });
@@ -52,9 +81,48 @@ const Navigation = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
+      localStorage.clear();
+      sessionStorage.clear();
+      if ('caches' in window) {
+        try {
+          const cacheKeys = await caches.keys();
+          await Promise.all(cacheKeys.map(key => caches.delete(key)));
+        } catch (err) {
+          console.error('Error clearing caches:', err);
+        }
+      }
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
+    }
+  };
+
+  const handleContactSubmit = async () => {
+    try {
+      const { error } = await supabase
+        .from('contact_submissions')
+        .insert([contactForm]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Your message has been sent successfully!",
+      });
+      setIsContactOpen(false);
+      setContactForm({
+        name: '',
+        company: '',
+        message: '',
+        email: '',
+        phone: ''
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -63,7 +131,6 @@ const Navigation = () => {
       <div className="max-w-5xl mx-auto">
         <div className={`relative backdrop-blur-sm bg-white/70 rounded-full shadow-lg transition-all duration-300 ${isScrolled ? 'py-2' : 'py-3'} px-6`}>
           <div className="flex justify-between items-center">
-            {/* Logo section */}
             <Link to="/" className="flex items-center space-x-2">
               <img 
                 src="/lovable-uploads/c0110f52-c24f-4c1a-8c0c-05941815b26e.png" 
@@ -72,41 +139,81 @@ const Navigation = () => {
               />
             </Link>
 
-            {/* Center section with main navigation */}
             <div className="flex-1 flex justify-center items-center">
               <div className="hidden md:flex items-center space-x-6">
-                <Link to="/" className="text-gray-900 hover:text-gray-600 text-sm font-medium">
-                  Home
-                </Link>
-                <Link to="/blog" className="text-gray-900 hover:text-gray-600 text-sm font-medium">
-                  Blog
-                </Link>
-                {!session && (
-                  <Link
-                    to="/auth"
-                    className="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 text-sm font-medium"
-                  >
-                    Sign In
-                  </Link>
+                {!session ? (
+                  <>
+                    <Link to="/" className="text-gray-900 hover:text-gray-600 text-sm font-medium">
+                      Home
+                    </Link>
+                    <Link to="/blog" className="text-gray-900 hover:text-gray-600 text-sm font-medium">
+                      Blog
+                    </Link>
+                    <Dialog open={isContactOpen} onOpenChange={setIsContactOpen}>
+                      <DialogTrigger asChild>
+                        <button className="text-gray-900 hover:text-gray-600 text-sm font-medium">
+                          Contact Us
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Contact Us</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <Input
+                            placeholder="Name"
+                            value={contactForm.name}
+                            onChange={(e) => setContactForm(prev => ({ ...prev, name: e.target.value }))}
+                          />
+                          <Input
+                            placeholder="Company"
+                            value={contactForm.company}
+                            onChange={(e) => setContactForm(prev => ({ ...prev, company: e.target.value }))}
+                          />
+                          <Input
+                            type="email"
+                            placeholder="Email"
+                            value={contactForm.email}
+                            onChange={(e) => setContactForm(prev => ({ ...prev, email: e.target.value }))}
+                          />
+                          <div className="phone-input-container">
+                            <PhoneInput
+                              country={'us'}
+                              value={contactForm.phone}
+                              onChange={(phone) => setContactForm(prev => ({ ...prev, phone }))}
+                              containerClass="w-full"
+                              inputClass="w-full !h-10 !py-2 !px-3 !text-base"
+                            />
+                          </div>
+                          <Textarea
+                            placeholder="Message"
+                            value={contactForm.message}
+                            onChange={(e) => setContactForm(prev => ({ ...prev, message: e.target.value }))}
+                          />
+                          <Button onClick={handleContactSubmit}>Send Message</Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/dashboard"
+                      className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors text-sm"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link to="/" className="text-gray-900 hover:text-gray-600 text-sm font-medium">
+                      Home
+                    </Link>
+                  </>
                 )}
               </div>
             </div>
 
-            {/* Right section with additional actions */}
             <div className="hidden md:flex items-center space-x-4">
-              {session && (
+              {session ? (
                 <>
-                  <div className="flex items-center space-x-3">
-                    <Bell className="h-4 w-4 text-gray-600 hover:text-gray-900 cursor-pointer" />
-                    <Mail className="h-4 w-4 text-gray-600 hover:text-gray-900 cursor-pointer" />
-                    <MessageCircle className="h-4 w-4 text-gray-600 hover:text-gray-900 cursor-pointer" />
-                  </div>
-                  <Link
-                    to="/dashboard"
-                    className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors text-sm"
-                  >
-                    Dashboard
-                  </Link>
                   <Link
                     to="/settings"
                     className="text-gray-900 hover:text-gray-600 flex items-center space-x-2 text-sm font-medium"
@@ -121,10 +228,24 @@ const Navigation = () => {
                     Logout
                   </button>
                 </>
+              ) : (
+                <div className="flex items-center space-x-4">
+                  <Link
+                    to="/auth"
+                    className="text-gray-900 hover:text-gray-600 text-sm font-medium"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/auth?mode=signup"
+                    className="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 text-sm font-medium"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
               )}
             </div>
 
-            {/* Mobile menu button */}
             <div className="md:hidden">
               <button
                 onClick={() => setIsOpen(!isOpen)}
@@ -135,22 +256,45 @@ const Navigation = () => {
             </div>
           </div>
 
-          {/* Mobile menu */}
           {isOpen && (
             <div className="md:hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg py-2 px-4">
-              <Link to="/" className="block py-2 text-gray-900 hover:text-gray-600">
-                Home
-              </Link>
-              <Link to="/blog" className="block py-2 text-gray-900 hover:text-gray-600">
-                Blog
-              </Link>
-              {session ? (
+              {!session ? (
+                <>
+                  <Link to="/" className="block py-2 text-gray-900 hover:text-gray-600">
+                    Home
+                  </Link>
+                  <Link to="/blog" className="block py-2 text-gray-900 hover:text-gray-600">
+                    Blog
+                  </Link>
+                  <button
+                    onClick={() => setIsContactOpen(true)}
+                    className="block w-full text-left py-2 text-gray-900 hover:text-gray-600"
+                  >
+                    Contact Us
+                  </button>
+                  <Link
+                    to="/auth"
+                    className="block py-2 text-gray-900 hover:text-gray-600"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/auth?mode=signup"
+                    className="block py-2 text-gray-900 hover:text-gray-600"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              ) : (
                 <>
                   <Link
                     to="/dashboard"
                     className="block py-2 text-gray-900 hover:text-gray-600"
                   >
                     Dashboard
+                  </Link>
+                  <Link to="/" className="block py-2 text-gray-900 hover:text-gray-600">
+                    Home
                   </Link>
                   <Link
                     to="/settings"
@@ -165,13 +309,6 @@ const Navigation = () => {
                     Logout
                   </button>
                 </>
-              ) : (
-                <Link
-                  to="/auth"
-                  className="block py-2 text-gray-900 hover:text-gray-600"
-                >
-                  Sign In
-                </Link>
               )}
             </div>
           )}
