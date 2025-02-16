@@ -27,12 +27,12 @@ jobs:
             echo "Error: SERVER_IP or SERVER_USER not defined"
             exit 1
           fi
-          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP << EOF
-            cd /var/www/automationaid
-            git pull origin main
-            npm install
-            npm run build
-            sudo systemctl reload nginx
+          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP << 'EOF'
+cd /var/www/automationaid
+git pull origin main
+npm install
+npm run build
+sudo systemctl reload nginx
 EOF
 
       - name: Notify Discord on Failure
