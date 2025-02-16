@@ -77,25 +77,27 @@ const FinalDetailsStep = ({ formData, onChange, errors }: FinalDetailsStepProps)
               dropdownClass="phone-dropdown"
             />
           </div>
-          <style jsx global>{`
-            .phone-input {
-              width: 100% !important;
-            }
-            .phone-input input {
-              width: 100% !important;
-              height: 40px !important;
-              border-radius: 6px !important;
-              border: 1px solid #e5e7eb !important;
-            }
-            .phone-input .phone-button {
-              background: #f9fafb !important;
-              border: 1px solid #e5e7eb !important;
-              border-radius: 6px 0 0 6px !important;
-            }
-            .phone-dropdown {
-              width: 300px !important;
-            }
-          `}</style>
+          <style dangerouslySetInnerHTML={{
+            __html: `
+              .phone-input {
+                width: 100% !important;
+              }
+              .phone-input input {
+                width: 100% !important;
+                height: 40px !important;
+                border-radius: 6px !important;
+                border: 1px solid #e5e7eb !important;
+              }
+              .phone-input .phone-button {
+                background: #f9fafb !important;
+                border: 1px solid #e5e7eb !important;
+                border-radius: 6px 0 0 6px !important;
+              }
+              .phone-dropdown {
+                width: 300px !important;
+              }
+            `
+          }} />
         </div>
       )}
 
