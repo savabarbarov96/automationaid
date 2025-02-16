@@ -1,13 +1,16 @@
 
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useToast } from '../hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
-import { Input } from "@/components/ui/input";
-import StepIndicator from './onboarding/StepIndicator';
 import PurposeStep from './onboarding/PurposeStep';
 import ContactStep from './onboarding/ContactStep';
 import FinalDetailsStep from './onboarding/FinalDetailsStep';
+import StepIndicator from './onboarding/StepIndicator';
 
 interface OnboardingFlowProps {
   isOpen: boolean;
@@ -15,159 +18,145 @@ interface OnboardingFlowProps {
 }
 
 const OnboardingFlow = ({ isOpen, onClose }: OnboardingFlowProps) => {
-  const [step, setStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [errors, setErrors] = useState<{
+    email?: string;
+    phone?: string;
+  }>({});
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     purpose: '',
-    email: '',
     contact_preference: '',
     contact_other: '',
     phone: '',
     company: '',
-    message: ''
+    message: '',
+    email: ''
   });
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
-  const handleNextStep = () => {
-    if (step === 1 && !formData.purpose) {
-      toast({
-        title: "Please select a purpose",
-        variant: "destructive",
-      });
-      return;
+  const handleFormChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+    
+    if (!formData.email || !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
     }
-    if (step === 2 && !formData.email) {
-      toast({
-        title: "Please enter your email",
-        variant: "destructive",
-      });
-      return;
+    
+    if (formData.contact_preference === 'phone' && !formData.phone) {
+      newErrors.phone = 'Phone number is required';
     }
-    if (step === 3 && !formData.contact_preference) {
-      toast({
-        title: "Please select a contact preference",
-        variant: "destructive",
-      });
-      return;
-    }
-    setStep(step + 1);
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
+    if (!validateForm()) return;
+
     try {
-      // Save to database
-      const { error: dbError } = await supabase
+      const { error } = await supabase
         .from('contact_submissions')
-        .insert([formData]);
+        .insert([
+          {
+            purpose: formData.purpose,
+            contact_preference: formData.contact_preference,
+            contact_other: formData.contact_other,
+            phone: formData.phone,
+            company: formData.company || '',
+            message: formData.message,
+            email: formData.email
+          }
+        ]);
 
-      if (dbError) throw dbError;
-
-      // Send confirmation email
-      const { error: emailError } = await supabase.functions.invoke('send-onboarding-email', {
-        body: formData
-      });
-
-      if (emailError) throw emailError;
+      if (error) throw error;
 
       toast({
-        title: "Message sent!",
-        description: "We'll get back to you soon. Check your email for confirmation.",
+        title: "Success!",
+        description: "Thank you for your submission. We'll be in touch soon!",
       });
+
       onClose();
+      setCurrentStep(1);
+      setFormData({
+        purpose: '',
+        contact_preference: '',
+        contact_other: '',
+        phone: '',
+        company: '',
+        message: '',
+        email: ''
+      });
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
-  if (!isOpen) return null;
+  const nextStep = () => {
+    if (currentStep < 3) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      handleSubmit();
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-gradient-to-br from-white to-gray-50 rounded-2xl w-full max-w-md p-8 shadow-xl animate-fade-up m-4">
-        <div className="absolute top-4 right-4 flex space-x-2">
-          {step > 1 && (
-            <button 
-              onClick={() => setStep(step - 1)}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <ChevronLeft size={20} />
-            </button>
-          )}
-          <button 
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            ×
-          </button>
-        </div>
-
-        <StepIndicator currentStep={step} totalSteps={4} />
-
-        {step === 1 && (
-          <PurposeStep
-            selectedPurpose={formData.purpose}
-            onSelect={(purpose) => setFormData({ ...formData, purpose })}
-          />
-        )}
-
-        {step === 2 && (
-          <div className="space-y-6 animate-fade">
-            <h2 className="text-2xl font-bold mb-6">What's your email?</h2>
-            <Input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="your@email.com"
-              className="w-full"
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]">
+        <StepIndicator currentStep={currentStep} totalSteps={3} />
+        
+        <div className="mt-6">
+          {currentStep === 1 && (
+            <PurposeStep
+              selectedPurpose={formData.purpose}
+              onSelect={(purpose) => handleFormChange('purpose', purpose)}
             />
-          </div>
-        )}
-
-        {step === 3 && (
-          <ContactStep
-            contactPreference={formData.contact_preference}
-            contactOther={formData.contact_other}
-            onSelectPreference={(preference) => setFormData({ ...formData, contact_preference: preference })}
-            onOtherChange={(value) => setFormData({ ...formData, contact_other: value })}
-          />
-        )}
-
-        {step === 4 && (
-          <FinalDetailsStep
-            formData={formData}
-            onChange={(field, value) => setFormData({ ...formData, [field]: value })}
-          />
-        )}
-
-        <div className="mt-8">
-          {step < 4 ? (
-            <button
-              onClick={handleNextStep}
-              className="w-full bg-black text-white py-3 rounded-xl hover:bg-gray-800 transition-colors flex items-center justify-center space-x-2"
-            >
-              <span>Continue</span>
-              <ChevronRight size={20} />
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="w-full bg-black text-white py-3 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
-            >
-              {loading ? 'Sending...' : 'Submit'}
-            </button>
+          )}
+          
+          {currentStep === 2 && (
+            <ContactStep
+              contactPreference={formData.contact_preference}
+              contactOther={formData.contact_other}
+              onSelectPreference={(pref) => handleFormChange('contact_preference', pref)}
+              onOtherChange={(value) => handleFormChange('contact_other', value)}
+            />
+          )}
+          
+          {currentStep === 3 && (
+            <FinalDetailsStep
+              formData={formData}
+              onChange={handleFormChange}
+              errors={errors}
+            />
           )}
         </div>
-      </div>
-    </div>
+
+        <div className="flex justify-between mt-8">
+          <Button
+            variant="outline"
+            onClick={prevStep}
+            className={currentStep === 1 ? 'invisible' : ''}
+          >
+            Back
+          </Button>
+          <Button onClick={nextStep}>
+            {currentStep === 3 ? 'Submit' : 'Next'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
