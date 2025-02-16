@@ -53,6 +53,8 @@ This project is built with .
 
 Simply open [Lovable](https://lovable.dev/projects/92f08fc7-e639-4d75-b2d9-4b0a6a230037) and click on Share -> Publish.
 
+Test
+
 ## I want to use a custom domain - is that possible?
 
 We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
