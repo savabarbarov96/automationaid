@@ -31,11 +31,11 @@ jobs:
             npm run build
             sudo systemctl reload nginx
           EOF
-        continue-on-error: true
 
       - name: Notify Discord on Failure
         if: failure()
-        uses: Ilshidur/action-discord@2.0.2
+        uses: Ilshidur/action-discord@0.3.2
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         with:
-          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          message: "Deployment to server failed. Please check the GitHub Actions logs for details."
+          args: "Deployment to server failed. Please check the GitHub Actions logs for details."
