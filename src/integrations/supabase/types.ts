@@ -115,6 +115,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           last_run: string | null
+          method: string
           name: string
           schedule: string | null
           url: string
@@ -126,6 +127,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           last_run?: string | null
+          method?: string
           name?: string
           schedule?: string | null
           url: string
@@ -137,6 +139,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           last_run?: string | null
+          method?: string
           name?: string
           schedule?: string | null
           url?: string

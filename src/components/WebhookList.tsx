@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { Plus, Trash2, Edit2, Clock, Play, Terminal, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Edit2, Clock, Play, Terminal, AlertCircle, Wand2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -24,11 +25,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 interface WebhookListProps {
   webhooks: any[];
   isLoading: boolean;
-  onAdd: (url: string) => Promise<boolean>;
+  onAdd: (url: string, name: string, method: string) => Promise<boolean>;
   onDelete: (id: string) => Promise<void>;
   onUpdateName: (id: string, name: string) => Promise<boolean>;
   onUpdateSchedule: (id: string, schedule: string) => Promise<boolean>;
@@ -45,12 +47,22 @@ export const WebhookList = ({
   onExecute
 }: WebhookListProps) => {
   const [newWebhookUrl, setNewWebhookUrl] = useState('');
+  const [newWebhookName, setNewWebhookName] = useState('');
   const [urlError, setUrlError] = useState('');
   const [editingWebhook, setEditingWebhook] = useState<any>(null);
   const [schedulingWebhook, setSchedulingWebhook] = useState<any>(null);
   const [isExecuting, setIsExecuting] = useState<string | null>(null);
   const [frequency, setFrequency] = useState('custom');
   const [customCron, setCustomCron] = useState('');
+  const [isTestingWebhook, setIsTestingWebhook] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState('POST');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const generateWebhookName = () => {
+    const randomString = Math.random().toString(36).substring(7);
+    setNewWebhookName(`Webhook-${randomString}`);
+  };
 
   const validateUrl = (url: string) => {
     try {
@@ -70,10 +82,41 @@ export const WebhookList = ({
     }
     if (!validateUrl(newWebhookUrl)) return;
     
-    const success = await onAdd(newWebhookUrl);
+    const success = await onAdd(newWebhookUrl, newWebhookName || `Webhook-${Math.random().toString(36).substring(7)}`, selectedMethod);
     if (success) {
       setNewWebhookUrl('');
+      setNewWebhookName('');
       setUrlError('');
+      setIsAddDialogOpen(false);
+    }
+  };
+
+  const handleTestWebhook = async () => {
+    if (!newWebhookUrl || !validateUrl(newWebhookUrl)) return;
+    
+    setIsTestingWebhook(true);
+    try {
+      const response = await fetch(newWebhookUrl, { method: selectedMethod });
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Webhook test was successful",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: `Webhook test failed with status ${response.status}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not test webhook. Please check the URL and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingWebhook(false);
     }
   };
 
@@ -101,18 +144,36 @@ export const WebhookList = ({
     <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Webhooks</h1>
-        <Sheet>
-          <SheetTrigger asChild>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
             <Button className="bg-black hover:bg-gray-800">
               <Plus className="mr-2 h-4 w-4" />
               Add Webhook
             </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Add New Webhook</SheetTitle>
-            </SheetHeader>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Webhook</DialogTitle>
+              <DialogDescription>
+                Configure your webhook endpoint and settings
+              </DialogDescription>
+            </DialogHeader>
             <div className="grid gap-4 py-4">
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Enter webhook name"
+                  value={newWebhookName}
+                  onChange={(e) => setNewWebhookName(e.target.value)}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={generateWebhookName}
+                  title="Generate random name"
+                >
+                  <Wand2 className="h-4 w-4" />
+                </Button>
+              </div>
               <div className="space-y-2">
                 <Input
                   placeholder="Enter webhook URL"
@@ -130,10 +191,30 @@ export const WebhookList = ({
                   </div>
                 )}
               </div>
-              <Button onClick={handleAdd}>Add Webhook</Button>
+              <Select value={selectedMethod} onValueChange={setSelectedMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="GET">GET</SelectItem>
+                  <SelectItem value="POST">POST</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleTestWebhook}
+                  disabled={isTestingWebhook || !newWebhookUrl}
+                >
+                  {isTestingWebhook ? 'Testing...' : 'Test Webhook'}
+                </Button>
+                <Button onClick={handleAdd} disabled={!newWebhookUrl || !!urlError}>
+                  Add Webhook
+                </Button>
+              </div>
             </div>
-          </SheetContent>
-        </Sheet>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {isLoading ? (
