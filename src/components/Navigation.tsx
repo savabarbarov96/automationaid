@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Settings } from 'lucide-react';
@@ -76,8 +77,11 @@ const Navigation = () => {
 
   const handleLogout = async () => {
     try {
+      // First clear all client-side data
       localStorage.clear();
       sessionStorage.clear();
+      
+      // Clear all browser caches
       if ('caches' in window) {
         try {
           const cacheKeys = await caches.keys();
@@ -86,12 +90,17 @@ const Navigation = () => {
           console.error('Error clearing caches:', err);
         }
       }
+
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Supabase signOut error:', error);
       }
-      await supabase.auth.clearSession();
+
+      // Reset the session state
       setSession(null);
+      
+      // Force a complete page reload
       window.location.href = '/';
     } catch (error) {
       console.error('Error during logout:', error);
