@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Json } from '@/integrations/supabase/types';
 
 export const useWebhooks = (session: any) => {
   const [webhooks, setWebhooks] = useState<any[]>([]);
@@ -27,17 +29,18 @@ export const useWebhooks = (session: any) => {
     }
   };
 
-  const addWebhook = async (url: string, name: string, method: string, body?: object) => {
+  const addWebhook = async (url: string, name: string, method: string, body?: any) => {
     try {
       const { error } = await supabase
         .from('webhook_integrations')
-        .insert([{ 
+        .insert({
           url,
           name,
           method,
           body: body || {},
-          user_id: session.user.id 
-        }]);
+          user_id: session.user.id,
+          is_active: true
+        });
 
       if (error) throw error;
 

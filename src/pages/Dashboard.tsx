@@ -35,7 +35,8 @@ const Dashboard = () => {
     addWebhook,
     deleteWebhook,
     updateWebhookName,
-    updateWebhookSchedule
+    updateWebhookSchedule,
+    toggleWebhookStatus
   } = useWebhooks(session);
 
   const {
@@ -70,6 +71,7 @@ const Dashboard = () => {
               onUpdateName={updateWebhookName}
               onUpdateSchedule={updateWebhookSchedule}
               onExecute={executeWebhook}
+              onToggleStatus={toggleWebhookStatus}
             />
           </TabsContent>
 
