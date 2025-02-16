@@ -28,9 +28,9 @@ export const WebhookList = ({
 
   return (
     <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl p-4 sm:p-8">
-      <div className={`${isMobile ? 'flex flex-col space-y-4' : 'flex justify-between items-center'} mb-8`}>
-        <h1 className="text-3xl font-bold">Webhooks</h1>
-        {!isMobile && <WebhookAddDialog onAdd={onAdd} />}
+      <div className="mb-4">
+        <h1 className="text-3xl font-bold mb-4">Webhooks</h1>
+        <WebhookAddDialog onAdd={onAdd} />
       </div>
 
       {isLoading ? (
@@ -41,7 +41,7 @@ export const WebhookList = ({
           <p className="text-sm text-gray-400 mt-2">Click the button to add your first webhook.</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 mt-6">
           {webhooks.map((webhook) => (
             <WebhookCard
               key={webhook.id}
@@ -53,12 +53,6 @@ export const WebhookList = ({
               onToggleStatus={onToggleStatus}
             />
           ))}
-        </div>
-      )}
-      
-      {isMobile && (
-        <div className="mt-6 sticky bottom-4">
-          <WebhookAddDialog onAdd={onAdd} />
         </div>
       )}
     </div>

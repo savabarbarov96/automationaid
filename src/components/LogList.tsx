@@ -5,7 +5,7 @@ interface LogListProps {
 
 export const LogList = ({ logs }: LogListProps) => {
   return (
-    <div className="bg-black/90 backdrop-blur-sm shadow-lg rounded-2xl p-8 text-green-500 font-mono">
+    <div className="bg-black/90 backdrop-blur-sm shadow-lg rounded-2xl p-4 sm:p-8 text-green-500 font-mono overflow-hidden">
       <h2 className="text-2xl font-bold mb-8 text-green-400">System Logs</h2>
       
       {logs.length === 0 ? (
@@ -22,11 +22,11 @@ export const LogList = ({ logs }: LogListProps) => {
             >
               <div className="grid grid-cols-[auto,1fr] gap-4">
                 <div className="text-green-600">$</div>
-                <div className="space-y-2">
+                <div className="space-y-2 break-words">
                   <p className="text-green-400">
                     Webhook: {log.webhook_integrations?.name}
                   </p>
-                  <p className="text-sm text-green-600">
+                  <p className="text-sm text-green-600 break-all">
                     URL: {log.webhook_integrations?.url}
                   </p>
                   <p className="text-sm">
@@ -38,7 +38,7 @@ export const LogList = ({ logs }: LogListProps) => {
                     {new Date(log.created_at).toLocaleString()}
                   </div>
                   {log.response_data && (
-                    <pre className="mt-2 p-2 bg-black/50 rounded text-xs overflow-x-auto">
+                    <pre className="mt-2 p-2 bg-black/50 rounded text-xs overflow-x-auto whitespace-pre-wrap break-all">
                       {JSON.stringify(log.response_data, null, 2)}
                     </pre>
                   )}
