@@ -11,16 +11,34 @@ const Navigation = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (!session) {
+        // If no session, clear any stale data
+        supabase.auth.signOut();
+      }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session);
       setSession(session);
+      
+      if (event === 'SIGNED_OUT') {
+        // Clear any auth data and redirect
+        await supabase.auth.signOut();
+        navigate('/');
+      } else if (event === 'SIGNED_IN') {
+        // Refresh the page to ensure clean state
+        window.location.reload();
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,8 +50,12 @@ const Navigation = () => {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
