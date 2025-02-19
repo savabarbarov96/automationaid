@@ -197,12 +197,12 @@ const Auth = () => {
             <div>
               <Input
                 type="email"
-                required={!isReset || !resetToken}
+                required={isReset ? !resetToken : true}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email address"
                 className="h-12"
-                disabled={isReset && resetToken}
+                disabled={isReset && !!resetToken}
               />
             </div>
             {(!isReset || resetToken) && (
@@ -244,7 +244,7 @@ const Auth = () => {
               </a>
               <a
                 href="/auth?mode=reset"
-                className="block text-sm text-gray-600 hover:text-gray-900"
+                className="block text-sm text-gray-600 hover:bg-gray-900"
               >
                 Forgot your password?
               </a>
