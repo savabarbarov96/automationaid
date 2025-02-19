@@ -51,17 +51,18 @@ export const useWebhookLogs = (session: any) => {
         const left = (window.innerWidth - width) / 2;
         const top = (window.innerHeight - height) / 2;
         
+        // Open the form in a new window
         const popupWindow = window.open(
           webhook.url,
-          'FormWebhook',
-          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes`
+          'WebhookForm',
+          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
         );
         
         if (!popupWindow) {
           throw new Error('Popup blocked. Please allow popups for this site.');
         }
 
-        // Update log with success
+        // Mark the log as successful since we successfully opened the form
         await supabase
           .from('webhook_logs')
           .update({
@@ -75,8 +76,11 @@ export const useWebhookLogs = (session: any) => {
 
         toast({
           title: "Form Opened",
-          description: "The form has been opened in a new window",
+          description: "The web form has been opened in a new window",
         });
+
+        fetchLogs();
+        return true;
       } else {
         // For regular webhooks, execute normally
         const response = await fetch(webhook.url, {
@@ -110,10 +114,10 @@ export const useWebhookLogs = (session: any) => {
           description: response.ok ? "Webhook executed successfully" : `Failed with status ${response.status}`,
           variant: response.ok ? "default" : "destructive",
         });
-      }
 
-      fetchLogs();
-      return true;
+        fetchLogs();
+        return true;
+      }
     } catch (error: any) {
       console.error('Error executing webhook:', error);
       toast({
