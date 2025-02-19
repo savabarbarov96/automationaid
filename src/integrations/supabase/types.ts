@@ -48,6 +48,24 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_documents: {
+        Row: {
+          content: string | null
+          id: number
+          title: string
+        }
+        Insert: {
+          content?: string | null
+          id?: number
+          title: string
+        }
+        Update: {
+          content?: string | null
+          id?: number
+          title?: string
+        }
+        Relationships: []
+      }
       notification_settings: {
         Row: {
           created_at: string
@@ -105,6 +123,24 @@ export type Database = {
           created_at?: string
           id?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      research: {
+        Row: {
+          id: number
+          research: string | null
+          topic: string
+        }
+        Insert: {
+          id?: number
+          research?: string | null
+          topic: string
+        }
+        Update: {
+          id?: number
+          research?: string | null
+          topic?: string
         }
         Relationships: []
       }
