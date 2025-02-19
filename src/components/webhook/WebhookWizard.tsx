@@ -17,16 +17,22 @@ interface WebhookWizardProps {
   onAdd: (url: string, name: string, method: string, body?: any) => Promise<boolean>;
 }
 
-const ADJECTIVES = [
-  "Swift", "Rapid", "Dynamic", "Smart", "Active", "Quick", "Agile", 
-  "Fast", "Direct", "Simple", "Auto", "Silent", "Bright", "Cloud",
-  "Digital", "Global", "Instant", "Modern", "Remote", "Virtual"
-];
-
-const NOUNS = [
-  "Webhook", "Link", "Connect", "Bridge", "Portal", "Signal", "Net",
-  "Request", "Route", "Path", "Point", "Call", "Flow", "Stream",
-  "Channel", "Node", "Relay", "Pulse", "Wave", "Line"
+const FUNNY_NAMES = [
+  "🚀 Cosmic Caller",
+  "🎭 Quirky Query",
+  "🌈 Rainbow Request",
+  "🎪 Circus Circuit",
+  "🎲 Lucky Link",
+  "🎯 Bullseye Ping",
+  "🎨 Artsy API",
+  "🎮 Game Gateway",
+  "🎪 Fun Form",
+  "🎭 Masked Messenger",
+  "🎪 Circus Send",
+  "🎯 Target Talk",
+  "🎲 Random Relay",
+  "🎨 Color Courier",
+  "🎮 Play Ping",
 ];
 
 export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
@@ -83,7 +89,7 @@ export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
     
     const success = await onAdd(
       webhookData.url,
-      webhookData.name || generateRandomName(),
+      webhookData.name || `Webhook-${Math.random().toString(36).substring(7)}`,
       webhookType === 'form' ? 'GET' : webhookData.method,
       body
     );
@@ -101,11 +107,9 @@ export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
     }
   };
 
-  const generateRandomName = () => {
-    const adjective = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
-    const randomNum = Math.floor(Math.random() * 1000);
-    return `${adjective}${noun}${randomNum}`;
+  const generateFunnyName = () => {
+    const randomName = FUNNY_NAMES[Math.floor(Math.random() * FUNNY_NAMES.length)];
+    setWebhookData(prev => ({ ...prev, name: randomName }));
   };
 
   const renderStep = () => {
@@ -170,7 +174,7 @@ export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={generateRandomName}
+                  onClick={generateFunnyName}
                   className="whitespace-nowrap"
                 >
                   🎲 Generate
