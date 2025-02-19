@@ -29,6 +29,27 @@ export const useWebhookLogs = (session: any) => {
   };
 
   const executeWebhook = async (webhook: any) => {
+    let popupWindow: Window | null = null;
+
+    if (webhook.type === 'form') {
+      // Calculate dimensions for the popup
+      const width = Math.min(800, window.innerWidth - 40);
+      const height = Math.min(800, window.innerHeight - 40);
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+      
+      // Open the popup synchronously
+      popupWindow = window.open(
+        '',
+        'WebhookForm',
+        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+      );
+      
+      if (!popupWindow) {
+        throw new Error('Popup blocked. Please allow popups for this site.');
+      }
+    }
+
     try {
       // Create initial log entry
       const { data: logEntry, error: logError } = await supabase
@@ -45,24 +66,10 @@ export const useWebhookLogs = (session: any) => {
       if (logError) throw logError;
 
       if (webhook.type === 'form') {
-        // For form webhooks, directly open in a new window
-        const width = Math.min(800, window.innerWidth - 40);
-        const height = Math.min(800, window.innerHeight - 40);
-        const left = (window.innerWidth - width) / 2;
-        const top = (window.innerHeight - height) / 2;
-        
-        // Open the form in a new window
-        const popupWindow = window.open(
-          webhook.url,
-          'WebhookForm',
-          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
-        );
-        
-        if (!popupWindow) {
-          throw new Error('Popup blocked. Please allow popups for this site.');
-        }
+        // Navigate the already opened window to the desired URL
+        popupWindow!.location.href = webhook.url;
 
-        // Mark the log as successful since we successfully opened the form
+        // Mark the log as successful
         await supabase
           .from('webhook_logs')
           .update({
@@ -82,7 +89,7 @@ export const useWebhookLogs = (session: any) => {
         fetchLogs();
         return true;
       } else {
-        // For regular webhooks, execute normally
+        // Handle regular webhooks
         const response = await fetch(webhook.url, {
           method: webhook.method,
           headers: webhook.method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
@@ -91,7 +98,6 @@ export const useWebhookLogs = (session: any) => {
 
         const responseText = await response.text();
         let responseData;
-        
         try {
           responseData = JSON.parse(responseText);
         } catch {
