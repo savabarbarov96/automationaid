@@ -45,9 +45,17 @@ export const useWebhookLogs = (session: any) => {
       if (logError) throw logError;
 
       if (webhook.type === 'form') {
-        // For form webhooks, open in a new window
-        const popupWindow = window.open(webhook.url, 'FormWebhook', 
-          'width=800,height=800,left=200,top=200');
+        // For form webhooks, directly open in a new window
+        const width = Math.min(800, window.innerWidth - 40);
+        const height = Math.min(800, window.innerHeight - 40);
+        const left = (window.innerWidth - width) / 2;
+        const top = (window.innerHeight - height) / 2;
+        
+        const popupWindow = window.open(
+          webhook.url,
+          'FormWebhook',
+          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes`
+        );
         
         if (!popupWindow) {
           throw new Error('Popup blocked. Please allow popups for this site.');
@@ -77,11 +85,13 @@ export const useWebhookLogs = (session: any) => {
           body: webhook.method === 'POST' ? JSON.stringify(webhook.body) : undefined
         });
 
+        const responseText = await response.text();
         let responseData;
+        
         try {
-          responseData = await response.json();
+          responseData = JSON.parse(responseText);
         } catch {
-          responseData = await response.text();
+          responseData = responseText;
         }
 
         await supabase
