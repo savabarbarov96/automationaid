@@ -35,8 +35,6 @@ export const WebhookEditDialog = ({ webhook, onUpdateName }: WebhookEditDialogPr
   const [method, setMethod] = useState(webhook.method);
 
   const handleSave = async () => {
-    // For now we only update the name as that's what the interface supports
-    // You'll need to update the parent components to support updating other fields
     const success = await onUpdateName(webhook.id, name);
     if (success) {
       setIsOpen(false);
@@ -46,12 +44,12 @@ export const WebhookEditDialog = ({ webhook, onUpdateName }: WebhookEditDialogPr
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <Button
-        variant="outline"
-        size="lg"
-        className="h-12 w-12"
+        variant="ghost"
+        size="icon"
+        className="h-10 w-10 hover:bg-gray-100"
         onClick={() => setIsOpen(true)}
       >
-        <Edit2 className="h-5 w-5" />
+        <Edit2 className="h-4 w-4" />
       </Button>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -92,8 +90,6 @@ export const WebhookEditDialog = ({ webhook, onUpdateName }: WebhookEditDialogPr
               <SelectContent>
                 <SelectItem value="GET">GET</SelectItem>
                 <SelectItem value="POST">POST</SelectItem>
-                <SelectItem value="PUT">PUT</SelectItem>
-                <SelectItem value="DELETE">DELETE</SelectItem>
               </SelectContent>
             </Select>
           </div>
