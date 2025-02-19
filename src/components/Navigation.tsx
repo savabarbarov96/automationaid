@@ -1,15 +1,36 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
 import { Menu, X, Settings } from 'lucide-react';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const navigate = useNavigate();
   
+  // Check session on component mount
+  useState(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  });
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    navigate('/auth');
+  };
+
+  const handleSignUp = () => {
+    navigate('/auth?mode=signup');
   };
 
   return (
@@ -30,31 +51,44 @@ const Navigation = () => {
             >
               Home
             </Link>
-            <Link 
-              to="/dashboard" 
-              className="text-gray-700 hover:text-black px-3 py-2 text-sm font-bold transition-all duration-200 hover:scale-105 transform"
-            >
-              Dashboard
-            </Link>
-            <Link 
-              to="/blog" 
-              className="text-gray-700 hover:text-black px-3 py-2 text-sm font-bold transition-all duration-200 hover:scale-105 transform"
-            >
-              Blog
-            </Link>
-            <Link 
-              to="/settings" 
-              className="text-gray-700 hover:text-black px-3 py-2 text-sm font-bold transition-all duration-200 hover:scale-105 transform"
-            >
-              Settings
-            </Link>
-            <Button
-              onClick={handleSignOut}
-              variant="ghost"
-              className="text-gray-700 hover:text-black font-bold transition-all duration-200 hover:scale-105 transform"
-            >
-              Sign Out
-            </Button>
+            {session && (
+              <>
+                <Link 
+                  to="/dashboard" 
+                  className="text-gray-700 hover:text-black px-3 py-2 text-sm font-bold transition-all duration-200 hover:scale-105 transform"
+                >
+                  Dashboard
+                </Link>
+                <Link 
+                  to="/blog" 
+                  className="text-gray-700 hover:text-black px-3 py-2 text-sm font-bold transition-all duration-200 hover:scale-105 transform"
+                >
+                  Blog
+                </Link>
+                <Link 
+                  to="/settings" 
+                  className="text-gray-700 hover:text-black px-3 py-2 text-sm font-bold transition-all duration-200 hover:scale-105 transform"
+                >
+                  Settings
+                </Link>
+              </>
+            )}
+            {session ? (
+              <Button
+                onClick={handleSignOut}
+                variant="ghost"
+                className="text-gray-700 hover:text-black font-bold transition-all duration-200 hover:scale-105 transform"
+              >
+                Sign Out
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSignUp}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-lg transition-all duration-200 hover:scale-105 transform"
+              >
+                Sign Up
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -80,32 +114,45 @@ const Navigation = () => {
               >
                 Home
               </Link>
-              <Link
-                to="/dashboard"
-                className="block px-3 py-2 text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/blog"
-                className="block px-3 py-2 text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
-              >
-                Blog
-              </Link>
-              <Link
-                to="/settings"
-                className="block px-3 py-2 text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
-              >
-                <Settings className="inline-block w-5 h-5 mr-2" />
-                Settings
-              </Link>
-              <Button
-                onClick={handleSignOut}
-                variant="ghost"
-                className="w-full justify-start text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50"
-              >
-                Sign Out
-              </Button>
+              {session && (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="block px-3 py-2 text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/blog"
+                    className="block px-3 py-2 text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
+                  >
+                    Blog
+                  </Link>
+                  <Link
+                    to="/settings"
+                    className="block px-3 py-2 text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
+                  >
+                    <Settings className="inline-block w-5 h-5 mr-2" />
+                    Settings
+                  </Link>
+                </>
+              )}
+              {session ? (
+                <Button
+                  onClick={handleSignOut}
+                  variant="ghost"
+                  className="w-full justify-start text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50"
+                >
+                  Sign Out
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleSignUp}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold"
+                >
+                  Sign Up
+                </Button>
+              )}
             </div>
           </div>
         )}

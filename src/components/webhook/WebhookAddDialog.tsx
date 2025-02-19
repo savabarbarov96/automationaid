@@ -33,6 +33,8 @@ export const WebhookAddDialog = ({ onAdd }: WebhookAddDialogProps) => {
   const [selectedMethod, setSelectedMethod] = useState('GET');
   const [webhookBody, setWebhookBody] = useState('');
   const [isTestingWebhook, setIsTestingWebhook] = useState(false);
+  const [webhookType, setWebhookType] = useState('standard');
+  const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
 
   const generateWebhookName = () => {
@@ -90,6 +92,11 @@ export const WebhookAddDialog = ({ onAdd }: WebhookAddDialogProps) => {
   const handleTestWebhook = async () => {
     if (!newWebhookUrl || !validateUrl(newWebhookUrl)) return;
     
+    if (webhookType === 'form') {
+      setShowForm(true);
+      return;
+    }
+    
     setIsTestingWebhook(true);
     console.log('Testing webhook:', {
       url: newWebhookUrl,
@@ -100,13 +107,22 @@ export const WebhookAddDialog = ({ onAdd }: WebhookAddDialogProps) => {
     try {
       const response = await fetch(newWebhookUrl, { 
         method: selectedMethod,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         ...(selectedMethod === 'POST' && webhookBody && {
-          headers: { 'Content-Type': 'application/json' },
           body: webhookBody
         })
       });
       
-      const responseData = await response.json();
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch (e) {
+        responseData = await response.text();
+      }
+
       console.log('Webhook test response:', {
         status: response.status,
         data: responseData
@@ -137,86 +153,116 @@ export const WebhookAddDialog = ({ onAdd }: WebhookAddDialogProps) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-black hover:bg-gray-800">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Webhook
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add New Webhook</DialogTitle>
-          <DialogDescription>
-            Configure your webhook endpoint and settings
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Enter webhook name"
-              value={newWebhookName}
-              onChange={(e) => setNewWebhookName(e.target.value)}
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={generateWebhookName}
-              title="Generate random name"
-            >
-              <Wand2 className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="space-y-2">
-            <Input
-              placeholder="Enter webhook URL"
-              value={newWebhookUrl}
-              onChange={(e) => {
-                setNewWebhookUrl(e.target.value);
-                validateUrl(e.target.value);
-              }}
-              className={urlError ? 'border-red-500' : ''}
-            />
-            {urlError && (
-              <div className="flex items-center text-red-500 text-sm">
-                <AlertCircle className="h-4 w-4 mr-2" />
-                {urlError}
+    <>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button className="bg-black hover:bg-gray-800">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Webhook
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Webhook</DialogTitle>
+            <DialogDescription>
+              Configure your webhook endpoint and settings
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Enter webhook name"
+                value={newWebhookName}
+                onChange={(e) => setNewWebhookName(e.target.value)}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={generateWebhookName}
+                title="Generate random name"
+              >
+                <Wand2 className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <Input
+                placeholder="Enter webhook URL"
+                value={newWebhookUrl}
+                onChange={(e) => {
+                  setNewWebhookUrl(e.target.value);
+                  validateUrl(e.target.value);
+                }}
+                className={urlError ? 'border-red-500' : ''}
+              />
+              {urlError && (
+                <div className="flex items-center text-red-500 text-sm">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  {urlError}
+                </div>
+              )}
+            </div>
+            <Select value={webhookType} onValueChange={setWebhookType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select webhook type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard Webhook</SelectItem>
+                <SelectItem value="form">Form Webhook</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={selectedMethod} onValueChange={setSelectedMethod}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="GET">GET</SelectItem>
+                <SelectItem value="POST">POST</SelectItem>
+              </SelectContent>
+            </Select>
+            {selectedMethod === 'POST' && webhookType === 'standard' && (
+              <div className="space-y-2">
+                <label className="text-sm text-gray-500">Request Body (JSON)</label>
+                <Textarea
+                  placeholder="Enter JSON body"
+                  value={webhookBody}
+                  onChange={(e) => setWebhookBody(e.target.value)}
+                />
               </div>
             )}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleTestWebhook}
+                disabled={isTestingWebhook || !newWebhookUrl}
+              >
+                {isTestingWebhook ? 'Testing...' : 'Test Webhook'}
+              </Button>
+              <Button onClick={handleAdd} disabled={!newWebhookUrl || !!urlError}>
+                Add Webhook
+              </Button>
+            </div>
           </div>
-          <Select value={selectedMethod} onValueChange={setSelectedMethod}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select method" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="GET">GET</SelectItem>
-              <SelectItem value="POST">POST</SelectItem>
-            </SelectContent>
-          </Select>
-          {selectedMethod === 'POST' && (
-            <div className="space-y-2">
-              <label className="text-sm text-gray-500">Request Body (JSON)</label>
-              <Textarea
-                placeholder="Enter JSON body"
-                value={webhookBody}
-                onChange={(e) => setWebhookBody(e.target.value)}
+        </DialogContent>
+      </Dialog>
+
+      {/* Form Dialog */}
+      {showForm && (
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Form Preview</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              <iframe
+                src={newWebhookUrl}
+                className="w-full h-[500px] border-0"
+                title="Form Preview"
               />
             </div>
-          )}
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleTestWebhook}
-              disabled={isTestingWebhook || !newWebhookUrl}
-            >
-              {isTestingWebhook ? 'Testing...' : 'Test Webhook'}
-            </Button>
-            <Button onClick={handleAdd} disabled={!newWebhookUrl || !!urlError}>
-              Add Webhook
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+            <Button onClick={() => setShowForm(false)}>Close</Button>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 };
