@@ -41,13 +41,13 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d '{"content": "✅ Deployment succeeded for automationaid!"}' \
-               "${{ secrets.DISCORD_WEBHOOK_URL }}"
+               -d '{"content": "Deployment succeeded for automationaid!"}' \
+               "https://discord.com/api/webhooks/1341708827183157349/HouXP_cSD1s-BzC3OYlBq83lZZIRQVCLszWhPas3rpcZhrn08B2qM0_1ybzCJyIAy54z"
 
       - name: Notify Discord on Failure
         if: failure()
         run: |
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d '{"content": "🚨 Deployment failed for automationaid. Check GitHub Actions logs for details."}' \
-               "${{ secrets.DISCORD_WEBHOOK_URL }}"
+               -d '{"content": "Deployment failed for automationaid. Check GitHub Actions logs for details."}' \
+               "https://discord.com/api/webhooks/1341708827183157349/HouXP_cSD1s-BzC3OYlBq83lZZIRQVCLszWhPas3rpcZhrn08B2qM0_1ybzCJyIAy54z"
