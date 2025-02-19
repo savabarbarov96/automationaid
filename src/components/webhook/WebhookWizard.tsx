@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Plus, AlertCircle, ArrowRight, ArrowLeft, Globe, FormInput } from 'lucide-react';
 import {
@@ -17,6 +16,24 @@ import { cn } from "@/lib/utils";
 interface WebhookWizardProps {
   onAdd: (url: string, name: string, method: string, body?: any) => Promise<boolean>;
 }
+
+const FUNNY_NAMES = [
+  "🚀 Cosmic Caller",
+  "🎭 Quirky Query",
+  "🌈 Rainbow Request",
+  "🎪 Circus Circuit",
+  "🎲 Lucky Link",
+  "🎯 Bullseye Ping",
+  "🎨 Artsy API",
+  "🎮 Game Gateway",
+  "🎪 Fun Form",
+  "🎭 Masked Messenger",
+  "🎪 Circus Send",
+  "🎯 Target Talk",
+  "🎲 Random Relay",
+  "🎨 Color Courier",
+  "🎮 Play Ping",
+];
 
 export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -90,6 +107,11 @@ export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
     }
   };
 
+  const generateFunnyName = () => {
+    const randomName = FUNNY_NAMES[Math.floor(Math.random() * FUNNY_NAMES.length)];
+    setWebhookData(prev => ({ ...prev, name: randomName }));
+  };
+
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -143,11 +165,21 @@ export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Webhook Name
               </label>
-              <Input
-                placeholder="Enter webhook name"
-                value={webhookData.name}
-                onChange={(e) => setWebhookData({ ...webhookData, name: e.target.value })}
-              />
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter webhook name"
+                  value={webhookData.name}
+                  onChange={(e) => setWebhookData({ ...webhookData, name: e.target.value })}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={generateFunnyName}
+                  className="whitespace-nowrap"
+                >
+                  🎲 Generate
+                </Button>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

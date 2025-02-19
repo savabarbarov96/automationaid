@@ -14,6 +14,7 @@ interface WebhookCardProps {
     name: string;
     url: string;
     method: string;
+    type?: 'form' | 'normal';
     body?: any;
     schedule?: string;
     created_at: string;
@@ -50,13 +51,19 @@ export const WebhookCard = ({
       <div className="p-6">
         <div className="flex justify-between items-start gap-4">
           <div className="space-y-3 flex-grow">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h3 className="text-lg font-medium truncate">{webhook.name}</h3>
               <Badge 
                 variant={webhook.method === 'GET' ? 'secondary' : 'default'}
                 className="text-xs font-semibold"
               >
                 {webhook.method}
+              </Badge>
+              <Badge 
+                variant={webhook.type === 'form' ? 'outline' : 'secondary'}
+                className="text-xs"
+              >
+                {webhook.type === 'form' ? '🔤 Form' : '🔗 API'}
               </Badge>
             </div>
             <p className="text-sm text-gray-600 break-all font-mono">{webhook.url}</p>
@@ -74,19 +81,21 @@ export const WebhookCard = ({
               onCheckedChange={(checked) => onToggleStatus(webhook.id, checked)}
               className="data-[state=checked]:bg-green-500"
             />
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               {webhook.is_active && (
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 text-green-600 hover:text-green-700 hover:bg-green-50"
+                  size="lg"
+                  className={`h-12 w-12 text-green-600 hover:text-green-700 hover:bg-green-50 
+                    transition-all duration-300 transform hover:scale-105
+                    ${isExecuting ? 'animate-pulse' : ''}`}
                   onClick={handleExecution}
                   disabled={isExecuting}
                 >
                   {isExecuting ? (
-                    <Terminal className="h-4 w-4 animate-spin" />
+                    <Terminal className="h-5 w-5 animate-spin" />
                   ) : (
-                    <Play className="h-4 w-4" />
+                    <Play className="h-5 w-5" />
                   )}
                 </Button>
               )}
