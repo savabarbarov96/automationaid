@@ -13,21 +13,30 @@ const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  
+
+  // Enhanced session initialization with better error handling
   useEffect(() => {
-    // Initialize session
+    let mounted = true;
+
     const initializeSession = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        setSession(data.session);
+        // Get initial session
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
         
-        // Subscribe to auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log('Auth state changed:', event, session);
-          setSession(session);
+        if (mounted) {
+          setSession(initialSession);
+          setIsLoading(false);
+        }
+
+        // Set up auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+          console.log('Auth state changed:', event, currentSession);
           
-          // Handle specific auth events
+          if (mounted) {
+            setSession(currentSession);
+          }
+
           switch (event) {
             case 'SIGNED_IN':
               if (location.pathname === '/auth') {
@@ -35,29 +44,33 @@ const Navigation = () => {
               }
               break;
             case 'SIGNED_OUT':
+              // Clear any local state here
+              setSession(null);
               navigate('/auth');
               break;
             case 'TOKEN_REFRESHED':
-              setSession(session);
-              break;
             case 'USER_UPDATED':
-              setSession(session);
+              if (mounted) {
+                setSession(currentSession);
+              }
               break;
           }
         });
 
         return () => {
+          mounted = false;
           subscription.unsubscribe();
         };
       } catch (error) {
         console.error('Session initialization error:', error);
-        toast({
-          title: "Error",
-          description: "Failed to initialize session",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+          toast({
+            title: "Error",
+            description: "Failed to initialize session",
+            variant: "destructive"
+          });
+        }
       }
     };
 
@@ -67,23 +80,38 @@ const Navigation = () => {
   const handleSignOut = async () => {
     try {
       setIsLoading(true);
-      
+
       // First check if we have a valid session
       const { data: { session: currentSession } } = await supabase.auth.getSession();
-      if (!currentSession) {
-        console.log('No active session found, redirecting to auth...');
-        navigate('/auth');
-        return;
+      
+      // Attempt to sign out
+      const { error } = await supabase.auth.signOut();
+      
+      // Handle 403 error gracefully
+      if (error) {
+        console.warn('Sign out error:', error);
+        
+        // If it's a 403 error, we'll handle it gracefully
+        if (error.status === 403) {
+          console.warn('Received 403 on logout, clearing local session manually.');
+          // Clear local session state
+          setSession(null);
+          
+          // Note: Don't show error toast for 403
+          toast({
+            title: "Signed out",
+            description: "You have been successfully signed out",
+          });
+          
+          navigate('/auth');
+          return;
+        }
+        
+        // For other errors, throw them to be caught below
+        throw error;
       }
 
-      // Attempt to sign out
-      const { error } = await supabase.auth.signOut({
-        scope: 'local' // Use local scope instead of global to avoid 403 errors
-      });
-      
-      if (error) throw error;
-
-      // Clear session state and navigate
+      // Success path
       setSession(null);
       navigate('/auth');
       
