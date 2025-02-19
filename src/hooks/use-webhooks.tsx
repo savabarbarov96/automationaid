@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Json } from '@/integrations/supabase/types';
 
 export const useWebhooks = (session: any) => {
   const [webhooks, setWebhooks] = useState<any[]>([]);
@@ -31,16 +30,18 @@ export const useWebhooks = (session: any) => {
 
   const addWebhook = async (url: string, name: string, method: string, body?: any) => {
     try {
+      const webhookData = {
+        url,
+        name,
+        method,
+        body: method === 'POST' ? (body || {}) : null,
+        user_id: session.user.id,
+        is_active: true
+      };
+
       const { error } = await supabase
         .from('webhook_integrations')
-        .insert({
-          url,
-          name,
-          method,
-          body: body || {},
-          user_id: session.user.id,
-          is_active: true
-        });
+        .insert(webhookData);
 
       if (error) throw error;
 
@@ -49,6 +50,36 @@ export const useWebhooks = (session: any) => {
         description: "Webhook added successfully",
       });
       
+      fetchWebhooks();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const updateWebhook = async (id: string, updates: { name?: string; url?: string; method?: string; body?: any }) => {
+    try {
+      // If method is being updated, handle body accordingly
+      if (updates.method) {
+        updates.body = updates.method === 'POST' ? (updates.body || {}) : null;
+      }
+
+      const { error } = await supabase
+        .from('webhook_integrations')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Webhook updated successfully",
+      });
       fetchWebhooks();
       return true;
     } catch (error: any) {
@@ -110,53 +141,11 @@ export const useWebhooks = (session: any) => {
   };
 
   const updateWebhookName = async (id: string, newName: string) => {
-    try {
-      const { error } = await supabase
-        .from('webhook_integrations')
-        .update({ name: newName })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Webhook name updated successfully",
-      });
-      fetchWebhooks();
-      return true;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      return false;
-    }
+    return updateWebhook(id, { name: newName });
   };
 
   const updateWebhookSchedule = async (id: string, schedule: string) => {
-    try {
-      const { error } = await supabase
-        .from('webhook_integrations')
-        .update({ schedule })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Webhook schedule updated successfully",
-      });
-      fetchWebhooks();
-      return true;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      return false;
-    }
+    return updateWebhook(id, { schedule });
   };
 
   return {
@@ -167,6 +156,7 @@ export const useWebhooks = (session: any) => {
     deleteWebhook,
     updateWebhookName,
     updateWebhookSchedule,
-    toggleWebhookStatus
+    toggleWebhookStatus,
+    updateWebhook
   };
 };

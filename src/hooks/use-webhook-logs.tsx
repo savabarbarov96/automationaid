@@ -29,27 +29,6 @@ export const useWebhookLogs = (session: any) => {
   };
 
   const executeWebhook = async (webhook: any) => {
-    let popupWindow: Window | null = null;
-
-    if (webhook.type === 'form') {
-      // Calculate dimensions for the popup
-      const width = Math.min(800, window.innerWidth - 40);
-      const height = Math.min(800, window.innerHeight - 40);
-      const left = (window.innerWidth - width) / 2;
-      const top = (window.innerHeight - height) / 2;
-      
-      // Open the popup synchronously
-      popupWindow = window.open(
-        '',
-        'WebhookForm',
-        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
-      );
-      
-      if (!popupWindow) {
-        throw new Error('Popup blocked. Please allow popups for this site.');
-      }
-    }
-
     try {
       // Create initial log entry
       const { data: logEntry, error: logError } = await supabase
@@ -58,7 +37,7 @@ export const useWebhookLogs = (session: any) => {
           webhook_id: webhook.id,
           user_id: session.user.id,
           status: 'pending',
-          request_data: webhook.body || {}
+          request_data: webhook.method === 'POST' ? webhook.body : {}
         }])
         .select()
         .single();
@@ -66,10 +45,10 @@ export const useWebhookLogs = (session: any) => {
       if (logError) throw logError;
 
       if (webhook.type === 'form') {
-        // Navigate the already opened window to the desired URL
-        popupWindow!.location.href = webhook.url;
+        // Open form in new window
+        window.open(webhook.url, '_blank');
 
-        // Mark the log as successful
+        // Update log entry
         await supabase
           .from('webhook_logs')
           .update({
