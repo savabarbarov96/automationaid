@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
 import { Menu, X, Settings } from 'lucide-react';
@@ -9,35 +9,88 @@ import { useToast } from "@/hooks/use-toast";
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    // Initialize session
+    const initializeSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        setSession(data.session);
+        
+        // Subscribe to auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('Auth state changed:', event, session);
+          setSession(session);
+          
+          // Handle specific auth events
+          switch (event) {
+            case 'SIGNED_IN':
+              if (location.pathname === '/auth') {
+                navigate('/dashboard');
+              }
+              break;
+            case 'SIGNED_OUT':
+              navigate('/auth');
+              break;
+            case 'TOKEN_REFRESHED':
+              setSession(session);
+              break;
+            case 'USER_UPDATED':
+              setSession(session);
+              break;
+          }
+        });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session);
-      setSession(session);
-    });
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('Session initialization error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to initialize session",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => subscription.unsubscribe();
-  }, []);
+    initializeSession();
+  }, [navigate, location.pathname, toast]);
 
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error signing out:', error);
-        throw error;
+      setIsLoading(true);
+      
+      // First check if we have a valid session
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession) {
+        console.log('No active session found, redirecting to auth...');
+        navigate('/auth');
+        return;
       }
-      // Clear session state
+
+      // Attempt to sign out
+      const { error } = await supabase.auth.signOut({
+        scope: 'local' // Use local scope instead of global to avoid 403 errors
+      });
+      
+      if (error) throw error;
+
+      // Clear session state and navigate
       setSession(null);
-      // Navigate to auth page
       navigate('/auth');
+      
+      toast({
+        title: "Success",
+        description: "You have been signed out successfully",
+      });
     } catch (error: any) {
       console.error('Sign out error:', error);
       toast({
@@ -45,6 +98,8 @@ const Navigation = () => {
         description: error.message,
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -52,13 +107,10 @@ const Navigation = () => {
     navigate('/auth?mode=signup');
   };
 
-  // Clear local data if no session exists
-  useEffect(() => {
-    if (!session) {
-      console.log('No session found, clearing local state');
-      // You might want to clear any local state here
-    }
-  }, [session]);
+  // Prevent flash of authenticated content
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <nav className="fixed w-full z-50 backdrop-blur-sm bg-white/80 border-b border-gray-200">
@@ -104,14 +156,16 @@ const Navigation = () => {
               <Button
                 onClick={handleSignOut}
                 variant="ghost"
-                className="text-gray-700 hover:text-black font-bold transition-all duration-200 hover:scale-105 transform"
+                disabled={isLoading}
+                className="text-gray-700 hover:text-black font-bold transition-all duration-200 hover:scale-105 transform min-w-[100px]"
               >
-                Sign Out
+                {isLoading ? 'Signing out...' : 'Sign Out'}
               </Button>
             ) : (
               <Button
                 onClick={handleSignUp}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-lg transition-all duration-200 hover:scale-105 transform"
+                disabled={isLoading}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-lg transition-all duration-200 hover:scale-105 transform min-w-[100px]"
               >
                 Sign Up
               </Button>
@@ -124,9 +178,9 @@ const Navigation = () => {
               variant="ghost"
               size="icon"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-700"
+              className="text-gray-700 p-3"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMenuOpen ? <X className="h-8 w-8" /> : <Menu className="h-8 w-8" />}
             </Button>
           </div>
         </div>
@@ -134,10 +188,11 @@ const Navigation = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1">
+            <div className="px-2 pt-2 pb-3 space-y-2">
               <Link
                 to="/"
-                className="block px-3 py-2 text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-4 py-3 text-lg font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
               >
                 Home
               </Link>
@@ -145,37 +200,48 @@ const Navigation = () => {
                 <>
                   <Link
                     to="/dashboard"
-                    className="block px-3 py-2 text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-3 text-lg font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
                   >
                     Dashboard
                   </Link>
                   <Link
                     to="/blog"
-                    className="block px-3 py-2 text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-3 text-lg font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
                   >
                     Blog
                   </Link>
                   <Link
                     to="/settings"
-                    className="block px-3 py-2 text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-3 text-lg font-bold text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
                   >
-                    <Settings className="inline-block w-5 h-5 mr-2" />
+                    <Settings className="inline-block w-6 h-6 mr-2" />
                     Settings
                   </Link>
                 </>
               )}
               {session ? (
                 <Button
-                  onClick={handleSignOut}
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleSignOut();
+                  }}
+                  disabled={isLoading}
                   variant="ghost"
-                  className="w-full justify-start text-base font-bold text-gray-700 hover:text-black hover:bg-gray-50"
+                  className="w-full justify-center text-lg font-bold text-gray-700 hover:text-black hover:bg-gray-50 py-3"
                 >
-                  Sign Out
+                  {isLoading ? 'Signing out...' : 'Sign Out'}
                 </Button>
               ) : (
                 <Button
-                  onClick={handleSignUp}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleSignUp();
+                  }}
+                  disabled={isLoading}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white text-lg font-bold py-3"
                 >
                   Sign Up
                 </Button>

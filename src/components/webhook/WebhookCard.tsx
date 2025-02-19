@@ -44,18 +44,18 @@ export const WebhookCard = ({
   };
 
   return (
-    <div className={`p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors ${
+    <div className={`p-6 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors ${
       !webhook.is_active ? 'opacity-60' : ''
     }`}>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-medium">{webhook.name}</p>
-            <Badge variant={webhook.method === 'GET' ? 'secondary' : 'default'}>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+        <div className="space-y-2 flex-grow">
+          <div className="flex items-start gap-2 flex-wrap">
+            <p className="text-lg font-medium">{webhook.name}</p>
+            <Badge variant={webhook.method === 'GET' ? 'secondary' : 'default'} className="text-sm">
               {webhook.method}
             </Badge>
           </div>
-          <p className="text-sm text-gray-500 break-all">{webhook.url}</p>
+          <p className="text-base text-gray-500 break-all">{webhook.url}</p>
           {webhook.schedule && (
             <p className="text-sm text-gray-500">
               Schedule: {webhook.schedule}
@@ -66,25 +66,26 @@ export const WebhookCard = ({
           </p>
         </div>
         
-        <div className={`flex ${isMobile ? 'flex-wrap' : ''} items-center gap-2`}>
+        <div className={`flex ${isMobile ? 'flex-wrap justify-start' : 'flex-col'} gap-2`}>
           <Switch
             checked={webhook.is_active}
             onCheckedChange={(checked) => onToggleStatus(webhook.id, checked)}
+            className="data-[state=checked]:bg-green-500"
           />
           {webhook.is_active && (
             <Button
               variant="outline"
               size="icon"
-              className="bg-green-500 text-white hover:bg-green-600 transition-all hover:scale-105"
+              className="bg-green-500 text-white hover:bg-green-600 transition-all hover:scale-105 h-10 w-10"
               onClick={handleExecution}
               disabled={isExecuting}
             >
               {isExecuting ? (
                 <div className="animate-spin">
-                  <Terminal className="h-4 w-4" />
+                  <Terminal className="h-5 w-5" />
                 </div>
               ) : (
-                <Play className="h-4 w-4" />
+                <Play className="h-5 w-5" />
               )}
             </Button>
           )}
@@ -93,16 +94,16 @@ export const WebhookCard = ({
           <Button
             variant="outline"
             size="icon"
-            className="text-red-500 hover:text-red-600"
+            className="text-red-500 hover:text-red-600 h-10 w-10"
             onClick={() => onDelete(webhook.id)}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-5 w-5" />
           </Button>
         </div>
       </div>
       {webhook.method === 'POST' && webhook.body && (
-        <div className="mt-2 p-2 bg-gray-50 rounded text-sm font-mono">
-          <pre className="whitespace-pre-wrap break-all">
+        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          <pre className="text-sm font-mono whitespace-pre-wrap break-all overflow-x-auto">
             {JSON.stringify(webhook.body, null, 2)}
           </pre>
         </div>
