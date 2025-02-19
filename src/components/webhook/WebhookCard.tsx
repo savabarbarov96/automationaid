@@ -50,14 +50,14 @@ export const WebhookCard = ({
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div className="space-y-2 flex-grow">
           <div className="flex items-start gap-2 flex-wrap">
-            <p className="text-lg font-medium">{webhook.name}</p>
-            <Badge variant={webhook.method === 'GET' ? 'secondary' : 'default'} className="text-sm">
+            <p className="text-base font-medium">{webhook.name}</p>
+            <Badge variant={webhook.method === 'GET' ? 'secondary' : 'default'} className="text-xs">
               {webhook.method}
             </Badge>
           </div>
-          <p className="text-base text-gray-500 break-all">{webhook.url}</p>
+          <p className="text-sm text-gray-500 break-all">{webhook.url}</p>
           {webhook.schedule && (
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-500">
               Schedule: {webhook.schedule}
             </p>
           )}
@@ -66,17 +66,17 @@ export const WebhookCard = ({
           </p>
         </div>
         
-        <div className={`flex ${isMobile ? 'flex-wrap justify-start' : 'flex-col'} gap-2`}>
+        <div className={`flex ${isMobile ? 'flex-wrap justify-start' : 'flex-col'} gap-3`}>
           <Switch
             checked={webhook.is_active}
             onCheckedChange={(checked) => onToggleStatus(webhook.id, checked)}
-            className="data-[state=checked]:bg-green-500"
+            className="data-[state=checked]:bg-green-500 h-12 w-12"
           />
           {webhook.is_active && (
             <Button
               variant="outline"
-              size="icon"
-              className="bg-green-500 text-white hover:bg-green-600 transition-all hover:scale-105 h-10 w-10"
+              size="lg"
+              className="bg-green-500 text-white hover:bg-green-600 transition-all hover:scale-105 h-12 w-12"
               onClick={handleExecution}
               disabled={isExecuting}
             >
@@ -93,8 +93,8 @@ export const WebhookCard = ({
           <WebhookScheduleDialog webhook={webhook} onUpdateSchedule={onUpdateSchedule} />
           <Button
             variant="outline"
-            size="icon"
-            className="text-red-500 hover:text-red-600 h-10 w-10"
+            size="lg"
+            className="text-red-500 hover:text-red-600 h-12 w-12"
             onClick={() => onDelete(webhook.id)}
           >
             <Trash2 className="h-5 w-5" />
