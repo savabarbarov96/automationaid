@@ -27,15 +27,16 @@ jobs:
             echo "Error: SERVER_IP or SERVER_USER is not defined in secrets."
             exit 1
           fi
-          ssh -tt -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP << 'EOF'
+          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP << 'EOF'
           cd /var/www/automationaid
           git fetch origin main
           git reset --hard origin/main
           npm install
           npm run build
-          sleep 2
-          sudo systemctl reload nginx || true
+          nohup sudo systemctl reload nginx > /dev/null 2>&1 &
+          exit
           EOF
+
 
 
       - name: Notify Discord on Success
