@@ -160,9 +160,11 @@ export const useWebhooks = (session: any) => {
 
   // New function to execute a webhook
   const executeWebhook = async (webhook: any) => {
+    console.log("Executing webhook:", webhook);
     if (webhook.type === 'form') {
       // Open a new window/tab immediately in response to the user action
-      const newWindow = window.open(webhook.url, '_blank');
+      console.log("Opening new window for form webhook with URL:", webhook.url);
+      const newWindow = window.open('', '_blank');
       if (!newWindow) {
         toast({
           title: "Error",
@@ -171,14 +173,18 @@ export const useWebhooks = (session: any) => {
         });
         return false;
       }
+      // Optionally, write a loading message:
+      newWindow.document.write("Loading form...");
+      newWindow.location.href = webhook.url;
       toast({
         title: "Form Opened",
         description: "The webhook form has been opened in a new window.",
       });
       return true;
     } else {
-      // For non-form webhooks, perform a regular HTTP request
+      // For non-form webhooks, execute a regular HTTP request
       try {
+        console.log("Executing non-form webhook request");
         const response = await fetch(webhook.url, {
           method: webhook.method,
           headers: webhook.method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
