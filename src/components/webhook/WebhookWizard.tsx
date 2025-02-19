@@ -248,14 +248,6 @@ export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
               Your form webhook has been configured. When executed, it will open the form in a
               modal window for easy access.
             </p>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm font-medium">Preview your form</p>
-              <iframe
-                src={webhookData.url}
-                className="w-full h-[300px] border-0 mt-2"
-                title="Form Preview"
-              />
-            </div>
           </div>
         );
       default:
