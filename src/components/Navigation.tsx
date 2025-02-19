@@ -1,37 +1,64 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
 import { Menu, X, Settings } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
   
-  // Check session on component mount
-  useState(() => {
+  useEffect(() => {
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session);
       setSession(session);
     });
 
     return () => subscription.unsubscribe();
-  });
+  }, []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/auth');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        throw error;
+      }
+      // Clear session state
+      setSession(null);
+      // Navigate to auth page
+      navigate('/auth');
+    } catch (error: any) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSignUp = () => {
     navigate('/auth?mode=signup');
   };
+
+  // Clear local data if no session exists
+  useEffect(() => {
+    if (!session) {
+      console.log('No session found, clearing local state');
+      // You might want to clear any local state here
+    }
+  }, [session]);
 
   return (
     <nav className="fixed w-full z-50 backdrop-blur-sm bg-white/80 border-b border-gray-200">
