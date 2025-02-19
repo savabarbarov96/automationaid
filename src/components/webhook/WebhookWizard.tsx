@@ -35,24 +35,6 @@ const FUNNY_NAMES = [
   "🎮 Play Ping",
 ];
 
-const WEBHOOK_NAMES = [
-  "BigPoppa69",
-  "GEaziest",
-  "MrPotatoHead12",
-  "WebMaster42",
-  "HookMaster99",
-  "CaptainHook21",
-  "WebSlinger007",
-  "HookMeUp365",
-  "WebWizard420",
-  "TheNotifier123",
-  "WebRunner88",
-  "HookMachine42",
-  "NotifyKing777",
-  "WebNinja101",
-  "HookLegend55"
-];
-
 export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
@@ -150,7 +132,7 @@ export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
                 )}
               >
                 <FormInput className="h-8 w-8 text-blue-500" />
-                <h4 className="font-medium">Web Form</h4>
+                <h4 className="font-medium">Form Webhook</h4>
                 <p className="text-sm text-gray-500">
                   Create a webhook for embedding forms
                 </p>
@@ -168,7 +150,7 @@ export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
                 )}
               >
                 <Globe className="h-8 w-8 text-blue-500" />
-                <h4 className="font-medium">Webhook</h4>
+                <h4 className="font-medium">API Webhook</h4>
                 <p className="text-sm text-gray-500">
                   Create a webhook for API integrations
                 </p>
@@ -192,13 +174,10 @@ export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    const randomName = WEBHOOK_NAMES[Math.floor(Math.random() * WEBHOOK_NAMES.length)];
-                    setWebhookData(prev => ({ ...prev, name: randomName }));
-                  }}
+                  onClick={generateFunnyName}
                   className="whitespace-nowrap"
                 >
-                  Generate
+                  🎲 Generate
                 </Button>
               </div>
             </div>
@@ -264,11 +243,19 @@ export const WebhookWizard = ({ onAdd }: WebhookWizardProps) => {
           </div>
         ) : (
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">Web Form Configuration</h3>
+            <h3 className="text-lg font-medium">Form Webhook Configuration</h3>
             <p className="text-sm text-gray-500">
-              Your web form has been configured. When executed, it will open the form in a
-              new window for easy access.
+              Your form webhook has been configured. When executed, it will open the form in a
+              modal window for easy access.
             </p>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-sm font-medium">Preview your form</p>
+              <iframe
+                src={webhookData.url}
+                className="w-full h-[300px] border-0 mt-2"
+                title="Form Preview"
+              />
+            </div>
           </div>
         );
       default:

@@ -49,30 +49,24 @@ export const WebhookCard = ({
       !webhook.is_active ? 'opacity-60' : ''
     }`}>
       <div className="p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-          <div className="space-y-3 flex-grow min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-lg font-medium truncate max-w-[200px] sm:max-w-none">
-                {webhook.name}
-              </h3>
-              <div className="flex gap-2 flex-wrap">
-                <Badge 
-                  variant={webhook.method === 'GET' ? 'secondary' : 'default'}
-                  className="text-xs font-semibold"
-                >
-                  {webhook.method}
-                </Badge>
-                <Badge 
-                  variant={webhook.type === 'form' ? 'outline' : 'secondary'}
-                  className="text-xs"
-                >
-                  {webhook.type === 'form' ? 'Web Form' : 'Webhook'}
-                </Badge>
-              </div>
+        <div className="flex justify-between items-start gap-4">
+          <div className="space-y-3 flex-grow">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h3 className="text-lg font-medium truncate">{webhook.name}</h3>
+              <Badge 
+                variant={webhook.method === 'GET' ? 'secondary' : 'default'}
+                className="text-xs font-semibold"
+              >
+                {webhook.method}
+              </Badge>
+              <Badge 
+                variant={webhook.type === 'form' ? 'outline' : 'secondary'}
+                className="text-xs"
+              >
+                {webhook.type === 'form' ? '🔤 Form' : '🔗 API'}
+              </Badge>
             </div>
-            <p className="text-sm text-gray-600 break-all font-mono max-w-full overflow-hidden">
-              {webhook.url}
-            </p>
+            <p className="text-sm text-gray-600 break-all font-mono">{webhook.url}</p>
             {webhook.schedule && (
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Clock className="h-4 w-4" />
@@ -81,7 +75,7 @@ export const WebhookCard = ({
             )}
           </div>
           
-          <div className="flex items-center gap-2 self-end lg:self-center">
+          <div className="flex items-center gap-2">
             <Switch
               checked={webhook.is_active}
               onCheckedChange={(checked) => onToggleStatus(webhook.id, checked)}
@@ -92,8 +86,9 @@ export const WebhookCard = ({
                 <Button
                   variant="ghost"
                   size="lg"
-                  className="h-12 w-12 text-green-600 hover:text-green-700 hover:bg-green-50 
-                    transition-all duration-300 transform hover:scale-105"
+                  className={`h-12 w-12 text-green-600 hover:text-green-700 hover:bg-green-50 
+                    transition-all duration-300 transform hover:scale-105
+                    ${isExecuting ? 'animate-pulse' : ''}`}
                   onClick={handleExecution}
                   disabled={isExecuting}
                 >

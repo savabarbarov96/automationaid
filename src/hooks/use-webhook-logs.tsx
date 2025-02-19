@@ -46,16 +46,8 @@ export const useWebhookLogs = (session: any) => {
 
       if (webhook.type === 'form') {
         // For form webhooks, open in a new window
-        const width = 800;
-        const height = 800;
-        const left = (window.innerWidth - width) / 2;
-        const top = (window.innerHeight - height) / 2;
-        
-        const popupWindow = window.open(
-          webhook.url, 
-          'FormWebhook',
-          `width=${width},height=${height},left=${left},top=${top}`
-        );
+        const popupWindow = window.open(webhook.url, 'FormWebhook', 
+          'width=800,height=800,left=200,top=200');
         
         if (!popupWindow) {
           throw new Error('Popup blocked. Please allow popups for this site.');
@@ -79,52 +71,35 @@ export const useWebhookLogs = (session: any) => {
         });
       } else {
         // For regular webhooks, execute normally
-        let response;
+        const response = await fetch(webhook.url, {
+          method: webhook.method,
+          headers: webhook.method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
+          body: webhook.method === 'POST' ? JSON.stringify(webhook.body) : undefined
+        });
+
+        let responseData;
         try {
-          response = await fetch(webhook.url, {
-            method: webhook.method,
-            headers: webhook.method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
-            body: webhook.method === 'POST' ? JSON.stringify(webhook.body) : undefined
-          });
-          
-          const responseText = await response.text();
-          let responseData;
-          
-          try {
-            responseData = JSON.parse(responseText);
-          } catch {
-            responseData = responseText;
-          }
-
-          await supabase
-            .from('webhook_logs')
-            .update({
-              status: response.ok ? 'success' : 'error',
-              response_data: {
-                status: response.status,
-                data: responseData
-              }
-            })
-            .eq('id', logEntry.id);
-
-          toast({
-            title: response.ok ? "Success" : "Error",
-            description: response.ok ? "Webhook executed successfully" : `Failed with status ${response.status}`,
-            variant: response.ok ? "default" : "destructive",
-          });
-        } catch (error: any) {
-          await supabase
-            .from('webhook_logs')
-            .update({
-              status: 'error',
-              response_data: {
-                error: error.message
-              }
-            })
-            .eq('id', logEntry.id);
-
-          throw error;
+          responseData = await response.json();
+        } catch {
+          responseData = await response.text();
         }
+
+        await supabase
+          .from('webhook_logs')
+          .update({
+            status: response.ok ? 'success' : 'error',
+            response_data: {
+              status: response.status,
+              data: responseData
+            }
+          })
+          .eq('id', logEntry.id);
+
+        toast({
+          title: response.ok ? "Success" : "Error",
+          description: response.ok ? "Webhook executed successfully" : `Failed with status ${response.status}`,
+          variant: response.ok ? "default" : "destructive",
+        });
       }
 
       fetchLogs();
