@@ -33,15 +33,17 @@ jobs:
           git reset --hard origin/main
           npm install
           npm run build
-          sudo systemctl reload nginx
+          sleep 2
+          sudo systemctl reload nginx || true
           EOF
+
 
       - name: Notify Discord on Success
         if: success()
         run: |
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d '{"content": "Deployment succeeded for automationaid!"}' \
+               -d '{"content": "Deployment succeeded for automationaid! Way to go Sava and Slav! "}' \
                "https://discord.com/api/webhooks/1341708827183157349/HouXP_cSD1s-BzC3OYlBq83lZZIRQVCLszWhPas3rpcZhrn08B2qM0_1ybzCJyIAy54z"
 
       - name: Notify Discord on Failure
@@ -49,5 +51,5 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d '{"content": "Deployment failed for automationaid. Check GitHub Actions logs for details."}' \
+               -d '{"content": "Deployment failed for automationaid. Check GitHub Actions logs for details. Shit hit the fan yo!!"}' \
                "https://discord.com/api/webhooks/1341708827183157349/HouXP_cSD1s-BzC3OYlBq83lZZIRQVCLszWhPas3rpcZhrn08B2qM0_1ybzCJyIAy54z"
