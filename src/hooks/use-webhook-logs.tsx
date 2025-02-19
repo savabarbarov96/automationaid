@@ -29,58 +29,67 @@ export const useWebhookLogs = (session: any) => {
   };
 
   const executeWebhook = async (webhook: any) => {
+    let popupWindow: Window | null = null;
+
+    if (webhook.type === 'form') {
+      // Calculate dimensions for the popup
+      const width = Math.min(800, window.innerWidth - 40);
+      const height = Math.min(800, window.innerHeight - 40);
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+      
+      // Open the popup synchronously
+      popupWindow = window.open(
+        '',
+        'WebhookForm',
+        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+      );
+      
+      if (!popupWindow) {
+        throw new Error('Popup blocked. Please allow popups for this site.');
+      }
+    }
+
     try {
+      // Create initial log entry
+      const { data: logEntry, error: logError } = await supabase
+        .from('webhook_logs')
+        .insert([{
+          webhook_id: webhook.id,
+          user_id: session.user.id,
+          status: 'pending',
+          request_data: webhook.body || {}
+        }])
+        .select()
+        .single();
+
+      if (logError) throw logError;
+
       if (webhook.type === 'form') {
-        // Create log entry first
-        const { data: logEntry, error: logError } = await supabase
-          .from('webhook_logs')
-          .insert([{
-            webhook_id: webhook.id,
-            user_id: session.user.id,
-            status: 'pending',
-            request_data: {}
-          }])
-          .select()
-          .single();
+        // Navigate the already opened window to the desired URL
+        popupWindow!.location.href = webhook.url;
 
-        if (logError) throw logError;
-
-        // Directly open the form URL in a new window
-        window.open(webhook.url, '_blank');
-
-        // Update log entry
+        // Mark the log as successful
         await supabase
           .from('webhook_logs')
           .update({
             status: 'success',
             response_data: {
-              message: 'Form opened in new window'
+              status: 200,
+              data: 'Form opened successfully'
             }
           })
           .eq('id', logEntry.id);
 
         toast({
           title: "Form Opened",
-          description: "The form has been opened in a new window",
+          description: "The web form has been opened in a new window",
         });
 
         fetchLogs();
         return true;
       } else {
-        // For regular API webhooks
-        const { data: logEntry, error: logError } = await supabase
-          .from('webhook_logs')
-          .insert([{
-            webhook_id: webhook.id,
-            user_id: session.user.id,
-            status: 'pending',
-            request_data: webhook.body || {}
-          }])
-          .select()
-          .single();
-
-        if (logError) throw logError;
-
+        // Handle regular webhooks
         const response = await fetch(webhook.url, {
           method: webhook.method,
           headers: webhook.method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
@@ -89,7 +98,6 @@ export const useWebhookLogs = (session: any) => {
 
         const responseText = await response.text();
         let responseData;
-        
         try {
           responseData = JSON.parse(responseText);
         } catch {
