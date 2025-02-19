@@ -1,6 +1,6 @@
 
 import { WebhookCard } from './webhook/WebhookCard';
-import { WebhookAddDialog } from './webhook/WebhookAddDialog';
+import { WebhookWizard } from './webhook/WebhookWizard';
 import { useIsMobile } from '../hooks/use-mobile';
 
 interface WebhookListProps {
@@ -30,7 +30,7 @@ export const WebhookList = ({
     <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl p-4 sm:p-8">
       <div className="mb-4">
         <h1 className="text-3xl font-bold mb-4">Webhooks</h1>
-        <WebhookAddDialog onAdd={onAdd} />
+        <WebhookWizard onAdd={onAdd} />
       </div>
 
       {isLoading ? (
