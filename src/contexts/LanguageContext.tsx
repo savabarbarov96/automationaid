@@ -30,7 +30,7 @@ const translations = {
     },
     portfolio: {
       title: 'Our Portfolio',
-      subtitle: 'See how we've helped businesses transform their operations'
+      subtitle: "See how we've helped businesses transform their operations"
     },
     testimonials: {
       title: 'What Our Clients Say',
@@ -38,7 +38,7 @@ const translations = {
     },
     cta: {
       title: 'Ready to Transform Your Business?',
-      subtitle: 'Let's discuss how our AI solutions can help you achieve your business goals',
+      subtitle: "Let's discuss how our AI solutions can help you achieve your business goals",
       button: 'Contact Us'
     }
   },
