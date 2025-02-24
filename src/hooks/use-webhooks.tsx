@@ -64,7 +64,6 @@ export const useWebhooks = (session: any) => {
 
   const updateWebhook = async (id: string, updates: { name?: string; url?: string; method?: string; body?: any }) => {
     try {
-      // If method is being updated, handle body accordingly
       if (updates.method) {
         updates.body = updates.method === 'POST' ? (updates.body || {}) : null;
       }
@@ -144,10 +143,6 @@ export const useWebhooks = (session: any) => {
     return updateWebhook(id, { name: newName });
   };
 
-  const updateWebhookSchedule = async (id: string, schedule: string) => {
-    return updateWebhook(id, { schedule });
-  };
-
   return {
     webhooks,
     isLoading,
@@ -155,7 +150,6 @@ export const useWebhooks = (session: any) => {
     addWebhook,
     deleteWebhook,
     updateWebhookName,
-    updateWebhookSchedule,
     toggleWebhookStatus,
     updateWebhook
   };
