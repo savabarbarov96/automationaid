@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import Index from "./pages/Index";
 import Blog from "./pages/Blog";
 import Auth from "./pages/Auth";
@@ -40,35 +41,37 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route
-              path="/auth"
-              element={
-                session ? <Navigate to="/dashboard" replace /> : <Auth />
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                session ? <Dashboard /> : <Navigate to="/auth" replace />
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                session ? <Settings /> : <Navigate to="/auth" replace />
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <LanguageProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route
+                path="/auth"
+                element={
+                  session ? <Navigate to="/dashboard" replace /> : <Auth />
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  session ? <Dashboard /> : <Navigate to="/auth" replace />
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  session ? <Settings /> : <Navigate to="/auth" replace />
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 };
