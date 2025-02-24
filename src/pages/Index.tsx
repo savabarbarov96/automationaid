@@ -99,8 +99,8 @@ const Index = () => {
     },
     {
       icon: <MessageSquare className="w-8 h-8" />,
-      title: "AI Consulting",
-      description: "Expert guidance on implementing AI strategies that drive business growth."
+      title: "Consulting",
+      description: "Expert guidence on implementing AI and sofware to accelerate growth."
     }
   ];
 
@@ -153,7 +153,7 @@ const Index = () => {
             Transform Your Business<br />With Advanced AI Solutions
           </h1>
           <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto animate-fade-down" style={{ animationDelay: "0.2s" }}>
-            We build custom AI agents and integrate intelligent solutions to revolutionize your business processes
+            We build custom AI agents and software that integrates with your business needs
           </p>
           <button
             onClick={() => setIsContactOpen(true)}
